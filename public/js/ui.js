@@ -8,6 +8,7 @@
  */
 (function () {
   const ABERTO = 'dd-aberto';
+  const instancias = new Set();
   let atual = null;
 
   function esc(v) {
@@ -27,6 +28,9 @@
 
   document.addEventListener('click', e => {
     if (atual && !atual.contains(e.target)) fecharAtual();
+    // Telas que limpam filtros via selectedIndex/option.selected não disparam eventos:
+    // ressincroniza o texto das listas depois de qualquer clique
+    setTimeout(() => instancias.forEach(i => i.sincronizar()), 0);
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') fecharAtual();
@@ -61,6 +65,14 @@
     }
 
     function atualizarTexto() {
+      if (!multi) {
+        // Opção vazia com rótulo (ex.: "Todas") aparece como está
+        const o = select.selectedOptions[0];
+        texto.textContent = (o && o.textContent.trim()) || placeholder;
+        wrap.classList.toggle('dd-vazio', !o || o.value === '');
+        botao.disabled = select.disabled;
+        return;
+      }
       const marcadas = [...select.selectedOptions].filter(o => o.value !== '');
       if (!marcadas.length) {
         texto.textContent = placeholder;
@@ -160,7 +172,15 @@
       set(v) { desc.set.call(this, v); atualizarTexto(); },
     });
 
-    select._dd = { render, wrap };
+    // selectedIndex também é usado para limpar seleção
+    const descIdx = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+    Object.defineProperty(select, 'selectedIndex', {
+      get() { return descIdx.get.call(this); },
+      set(v) { descIdx.set.call(this, v); atualizarTexto(); },
+    });
+
+    select._dd = { render, wrap, sincronizar: atualizarTexto };
+    instancias.add(select._dd);
     render();
   }
 

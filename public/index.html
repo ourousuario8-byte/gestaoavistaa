@@ -5,160 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão a vista - Login</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/tema.css" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
+
+        body { display: flex; align-items: center; justify-content: center; }
+
         .login-container {
-            background: white;
-            padding: 40px;
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            max-width: 400px;
+            box-shadow: var(--shadow);
+            padding: clamp(28px, 6vw, 44px);
             width: 100%;
+            max-width: 420px;
             text-align: center;
         }
-        
+
         .logo {
-            font-size: 48px;
-            color: #667eea;
-            margin-bottom: 20px;
-        }
-        
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            background: var(--primary-soft);
+            color: var(--primary-text);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             font-size: 28px;
+            margin-bottom: 16px;
         }
-        
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 600;
-        }
-        
-        input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .btn {
-            width: 100%;
-            padding: 15px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 15px;
-        }
-        
-        .btn:hover {
-            background: #5a6fd8;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-        
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        
-        .status {
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-        
-        .test-section {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid #eee;
-        }
-        
-        .test-section h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-        
-        .credentials {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 14px;
-            text-align: left;
-        }
-        
-        .credentials strong {
-            color: #667eea;
-        }
-        
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 30px 20px;
-                margin: 10px;
-            }
-            
-            h1 {
-                font-size: 24px;
-            }
-        }
-        
-        .loading {
-            display: inline-block;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+
+        h1 { font-size: 24px; font-weight: 700; margin-bottom: 28px; letter-spacing: -.01em; }
+
+        .form-group { margin-bottom: 18px; text-align: left; }
+        label i { color: var(--muted); margin-right: 4px; }
+
+        .btn { width: 100%; padding: 13px; font-size: 15px; background: var(--primary); color: #fff; margin-top: 6px; }
+        .btn:hover { background: var(--primary-hover); }
+        .btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border-forte); }
+
+        .status { display: block; margin-top: 18px; text-align: left; }
+        .status:empty { display: none; }
+
+        .test-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .test-section h3 { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+        .credentials { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; font-size: 13px; text-align: left; }
+        .credentials strong { color: var(--primary-text); }
+
+        .loading { display: inline-block; animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>

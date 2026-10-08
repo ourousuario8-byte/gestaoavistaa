@@ -5,192 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu - Gestão Perlog</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/tema.css" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
+
+        body { display: flex; align-items: center; justify-content: center; }
+
         .menu-container {
-            background: white;
-            padding: 40px;
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            max-width: 500px;
+            box-shadow: var(--shadow);
+            padding: clamp(22px, 5vw, 40px);
             width: 100%;
-            text-align: center;
+            max-width: 920px;
         }
-        
-        .user-info {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-        }
-        
+
+        .user-info { text-align: center; margin-bottom: 28px; }
         .user-info i {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        
-        .user-info h2 {
-            margin: 0;
-            font-size: 24px;
-        }
-        
-        .user-info p {
-            margin: 5px 0 0;
-            opacity: 0.9;
-        }
-        
-        .areas-section h3 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 20px;
-        }
-        
-        .areas-grid {
-            display: grid;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .area-card {
-            padding: 20px;
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: left;
-        }
-        
-        .area-card:hover {
-            border-color: #667eea;
-            background: #f0f4ff;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
-        }
-        
-        .area-card.selected {
-            border-color: #667eea;
-            background: #667eea;
-            color: white;
-        }
-        
-        .area-card i {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #667eea;
-        }
-        
-        .area-card.selected i {
-            color: white;
-        }
-        
-        .area-card h4 {
-            margin: 0 0 5px;
-            font-size: 18px;
-        }
-        
-        .area-card p {
-            margin: 0;
-            font-size: 14px;
-            opacity: 0.8;
-        }
-        
-        .actions {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-        }
-        
-        .btn {
-            padding: 15px 25px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--primary-soft);
+            color: var(--primary-text);
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            font-size: 30px;
+            margin-bottom: 12px;
         }
-        
-        .btn-primary {
-            background: #667eea;
-            color: white;
+        .user-info h2 { font-size: 22px; font-weight: 700; }
+        .user-info p { color: var(--muted); }
+
+        .areas-section h3 { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 14px; display: flex; gap: 8px; align-items: center; }
+
+        .areas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
         }
-        
-        .btn-primary:hover {
-            background: #5a6fd8;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+
+        .area-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 16px;
+            cursor: pointer;
+            background: var(--surface);
+            transition: .15s;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            column-gap: 14px;
+            align-items: center;
+            text-align: left;
         }
-        
-        .btn-primary:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+
+        .area-card:hover { border-color: var(--border-forte); background: var(--surface-2); }
+        .area-card.selected { background: var(--primary-soft); border-color: var(--primary); }
+
+        .area-card i {
+            grid-row: span 2;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--primary-text);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
         }
-        
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-        }
-        
-        .status {
-            margin-top: 20px;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        
-        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .status.warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
-        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        
+
+        .area-card.selected i { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .area-card h4 { font-size: 15px; font-weight: 600; }
+        .area-card p { font-size: 12px; color: var(--muted); }
+
+        .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .actions .btn { min-width: 160px; padding: 12px 20px; }
+
+        .status { display: block; margin-top: 16px; text-align: center; }
+        .status:empty { display: none; }
+        .status.warning { background: var(--amber-soft); color: var(--amber); }
+
         @media (max-width: 600px) {
-            .menu-container {
-                padding: 30px 20px;
-                margin: 10px;
-            }
-            
-            .actions {
-                flex-direction: column;
-            }
-            
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
+            .areas-grid { grid-template-columns: 1fr; }
+            .actions .btn { flex: 1; min-width: 0; }
         }
-        
-        .loading {
-            display: inline-block;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+
+        .loading { display: inline-block; animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>

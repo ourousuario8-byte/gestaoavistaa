@@ -283,24 +283,21 @@
                 </div>
                 <div class="filtro-group">
                     <label><i class="fas fa-user-tie"></i> Supervisores</label>
-                    <select id="filtroSupervisor" multiple>
+                    <select id="filtroSupervisor" multiple data-placeholder="Todos os supervisores">
                         <option value="">Carregando...</option>
                     </select>
-                    <span class="filtro-hint">Segure Ctrl para selecionar múltiplos</span>
                 </div>
                 <div class="filtro-group">
                     <label><i class="fas fa-briefcase"></i> Funções</label>
-                    <select id="filtroFuncao" multiple>
+                    <select id="filtroFuncao" multiple data-placeholder="Todas as funções">
                         <option value="">Carregando...</option>
                     </select>
-                    <span class="filtro-hint">Segure Ctrl para selecionar múltiplos</span>
                 </div>
                 <div class="filtro-group">
                     <label><i class="fas fa-clock"></i> Turnos</label>
-                    <select id="filtroTurno" multiple>
+                    <select id="filtroTurno" multiple data-placeholder="Todos os turnos">
                         <option value="">Carregando...</option>
                     </select>
-                    <span class="filtro-hint">Segure Ctrl para selecionar múltiplos</span>
                 </div>
             </div>
             
@@ -971,5 +968,6 @@
 
         console.log('[RESUMO] Script carregado');
     </script>
+    <script src="/js/ui.js"></script>
 </body>
 </html>

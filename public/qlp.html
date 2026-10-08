@@ -5,190 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard QLP</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/tema.css" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+
         .container {
-            max-width: 1800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: clamp(16px, 3vw, 28px);
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e9ecef;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        .header h1 {
-            color: #667eea;
-            font-size: 28px;
-        }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn:hover { transform: translateY(-2px); }
-        .btn-success { background: #28a745; color: white; }
-        .btn-info { background: #17a2b8; color: white; }
-        .btn-warning { background: #ffc107; color: #212529; }
-        .btn-secondary { background: #6c757d; color: white; }
-        .btn-primary { background: #667eea; color: white; }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .stat-card {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            position: relative;
-        }
-        .stat-card h3 { font-size: 14px; opacity: 0.9; margin-bottom: 10px; }
-        .stat-card .stat-value { font-size: 32px; font-weight: bold; }
-        .stat-card i { font-size: 32px; opacity: 0.3; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); }
+        .container > .header { border: none; box-shadow: none; padding: 0 0 18px; border-bottom: 1px solid var(--border); border-radius: 0; }
+        .stats-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+        .stat-card { position: relative; }
+        .stat-card h3 { font-size: 12px; }
+        .stat-card .stat-value { font-size: clamp(24px, 3vw, 30px); font-weight: 700; color: var(--primary-text); }
+        .stat-card > i { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); margin: 0; }
+        .stat-card.ok .stat-value { color: var(--green); }
+        .stat-card.ok > i { background: var(--green-soft); color: var(--green); }
+        .stat-card.nok .stat-value { color: var(--red); }
+        .stat-card.nok > i { background: var(--red-soft); color: var(--red); }
+        .stat-card.info .stat-value { color: var(--blue); }
+        .stat-card.info > i { background: var(--blue-soft); color: var(--blue); }
+
         .filters {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            padding: 18px;
+            border-radius: var(--radius);
             margin-bottom: 20px;
         }
-        .filters-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .filter-group { display: flex; flex-direction: column; gap: 5px; }
-        .filter-group label { font-size: 13px; font-weight: 600; color: #495057; }
-        .filter-group select, .filter-group input {
-            padding: 10px 12px;
-            border: 2px solid #ced4da;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        .filter-group select:focus, .filter-group input:focus { outline: none; border-color: #667eea; }
-        .filter-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 12px;
-            border: 1px solid #e9ecef;
-            max-height: 600px;
-            overflow-y: auto;
-        }
-        table { border-collapse: collapse; width: 100%; background: white; font-size: 13px; }
-        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #dee2e6; white-space: nowrap; }
-        th {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
+        .filter-group label i { color: var(--muted); margin-right: 4px; }
+
+        .table-wrapper { border: 1px solid var(--border); border-radius: var(--radius-sm); }
+        td { white-space: nowrap; font-size: 13px; }
         th.sortable { cursor: pointer; user-select: none; }
-        th.sortable:hover { background: linear-gradient(135deg, #5a6fd8, #6a3b9a); }
-        th.sortable::after { content: " ⇅"; opacity: 0.5; }
+        th.sortable:hover { color: var(--text); }
+        th.sortable::after { content: " ⇅"; opacity: .5; }
         th.sort-asc::after { content: " ↑"; opacity: 1; }
         th.sort-desc::after { content: " ↓"; opacity: 1; }
-        tbody tr:hover { background-color: #f5f5f5; }
-        tbody tr:nth-child(even) { background-color: #fafafa; }
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-        .badge-ativo { background: #d4edda; color: #155724; }
-        .badge-inativo { background: #f8d7da; color: #721c24; }
-        .loading { text-align: center; padding: 60px 20px; color: #6c757d; }
-        .loading i { font-size: 64px; animation: spin 1s linear infinite; color: #667eea; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .status {
-            margin-top: 20px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .status.error { background: #f8d7da; color: #721c24; }
-        .status.success { background: #d4edda; color: #155724; }
-        .status.info { background: #d1ecf1; color: #0c5460; }
-        .empty-state { text-align: center; padding: 60px 20px; color: #6c757d; }
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-top: 20px;
-            padding: 20px;
-        }
+
+        .badge-ativo { background: var(--green-soft); color: var(--green); }
+        .badge-inativo { background: var(--red-soft); color: var(--red); }
+
+        .loading { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .loading i { font-size: 40px; color: var(--primary); animation: tema-spin 1s linear infinite; }
+
+        .status { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+        .status:empty { display: none; }
+
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 16px; padding: 10px; flex-wrap: wrap; }
         .pagination button {
-            padding: 8px 16px;
-            border: 1px solid #667eea;
-            background: white;
-            color: #667eea;
-            border-radius: 6px;
+            padding: 8px 14px;
+            border: 1px solid var(--border-forte);
+            background: var(--surface);
+            color: var(--text);
+            border-radius: var(--radius-sm);
             cursor: pointer;
+            font: inherit;
             font-weight: 600;
         }
-        .pagination button:hover:not(:disabled) { background: #667eea; color: white; }
-        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .analise-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-        .analise-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .analise-card {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .analise-card h4 { color: #495057; font-size: 15px; margin-bottom: 10px; }
-        .analise-bar { display: flex; height: 30px; border-radius: 4px; overflow: hidden; margin: 10px 0; }
-        .analise-bar-item {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .analise-bar-ativos { background: linear-gradient(135deg, #28a745, #20c997); }
-        .analise-bar-inativos { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .pagination button:hover:not(:disabled) { background: var(--primary-soft); color: var(--primary-text); border-color: transparent; }
+        .pagination button:disabled { opacity: .5; cursor: not-allowed; }
+
+        .analise-section { background: var(--surface-2); border: 1px solid var(--border); padding: 18px; border-radius: var(--radius); margin-bottom: 20px; }
+        .analise-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 14px; }
+        .analise-card { background: var(--surface); border: 1px solid var(--border); padding: 16px; border-radius: var(--radius-sm); }
+        .analise-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+        .analise-bar { display: flex; height: 26px; border-radius: 999px; overflow: hidden; margin: 10px 0; background: var(--surface-2); }
+        .analise-bar-item { display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+        .analise-bar-ativos { background: #cfe8d7; color: var(--green); }
+        .analise-bar-inativos { background: #f3d0ce; color: var(--red); }
+
         @media (max-width: 768px) {
-            .container { padding: 15px; }
-            .header { flex-direction: column; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .filters-row { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media print {
+            body { background: #fff; padding: 0; }
+            .filters, .container > .header > div { display: none !important; }
         }
     </style>
 </head>
@@ -196,7 +90,7 @@
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-chart-bar"></i> Dashboard QLP</h1>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <div class="header-actions">
                 <button class="btn btn-success" onclick="exportarCSV()">
                     <i class="fas fa-file-csv"></i> CSV
                 </button>
@@ -222,19 +116,19 @@
                 </div>
                 <div class="filter-group">
                     <label><i class="fas fa-layer-group"></i> Seção</label>
-                    <select id="filtroSecao"><option value="">Todas</option></select>
+                    <select id="filtroSecao" data-busca><option value="">Todas</option></select>
                 </div>
                 <div class="filter-group">
                     <label><i class="fas fa-clock"></i> Turno</label>
-                    <select id="filtroTurno"><option value="">Todos</option></select>
+                    <select id="filtroTurno" data-busca><option value="">Todos</option></select>
                 </div>
                 <div class="filter-group">
                     <label><i class="fas fa-user-tie"></i> Supervisor</label>
-                    <select id="filtroSupervisor"><option value="">Todos</option></select>
+                    <select id="filtroSupervisor" data-busca><option value="">Todos</option></select>
                 </div>
                 <div class="filter-group">
                     <label><i class="fas fa-briefcase"></i> Função</label>
-                    <select id="filtroFuncao"><option value="">Todas</option></select>
+                    <select id="filtroFuncao" data-busca><option value="">Todas</option></select>
                 </div>
                 <div class="filter-group">
                     <label><i class="fas fa-toggle-on"></i> Situação</label>
@@ -268,7 +162,7 @@
 
         <div id="analiseSection" class="analise-section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <h3 style="color: #667eea; margin: 0;">
+                <h3 style="color: var(--primary); margin: 0;">
                     <i class="fas fa-chart-pie"></i> <span id="tituloAnalise">Análise por Seção</span>
                 </h3>
                 <div style="display: flex; gap: 10px;">
@@ -367,9 +261,9 @@
             } catch (error) {
                 console.error('Erro:', error);
                 document.getElementById('loadingDiv').innerHTML = `
-                    <i class="fas fa-exclamation-triangle" style="color: #dc3545; font-size: 64px;"></i>
-                    <p style="color: #dc3545; margin-top: 20px;">Erro ao carregar dados</p>
-                    <p style="font-size: 14px; color: #6c757d;">${error.message}</p>
+                    <i class="fas fa-exclamation-triangle" style="color: var(--red); font-size: 64px;"></i>
+                    <p style="color: var(--red); margin-top: 20px;">Erro ao carregar dados</p>
+                    <p style="font-size: 14px; color: var(--muted);">${error.message}</p>
                     <button class="btn btn-warning" onclick="location.reload()" style="margin-top: 20px;">
                         <i class="fas fa-sync-alt"></i> Tentar Novamente
                     </button>
@@ -388,17 +282,17 @@
                     <div class="stat-value">${s.total}</div>
                     <i class="fas fa-users"></i>
                 </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                <div class="stat-card ok">
                     <h3>Ativos</h3>
                     <div class="stat-value">${s.ativos}</div>
                     <i class="fas fa-user-check"></i>
                 </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+                <div class="stat-card nok">
                     <h3>Inativos</h3>
                     <div class="stat-value">${s.inativos}</div>
                     <i class="fas fa-user-times"></i>
                 </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #17a2b8, #138496);">
+                <div class="stat-card info">
                     <h3>Seções</h3>
                     <div class="stat-value">${s.totalSecoes}</div>
                     <i class="fas fa-layer-group"></i>
@@ -576,8 +470,8 @@
                         
                         return `
                             <div class="analise-card">
-                                <h4><i class="fas fa-${icone}" style="color: #667eea; margin-right: 8px;"></i>${nome}</h4>
-                                <p style="color: #6c757d; margin-bottom: 10px; font-weight: 600;">Total: ${total} colaboradores</p>
+                                <h4><i class="fas fa-${icone}" style="color: var(--primary); margin-right: 8px;"></i>${nome}</h4>
+                                <p style="color: var(--muted); margin-bottom: 10px; font-weight: 600;">Total: ${total} colaboradores</p>
                                 <div class="analise-bar">
                                     <div class="analise-bar-item analise-bar-ativos" style="width: ${pA}%">
                                         ${ativos > 0 ? ativos : ''}
@@ -586,9 +480,9 @@
                                         ${inativos > 0 ? inativos : ''}
                                     </div>
                                 </div>
-                                <p style="font-size: 12px; color: #6c757d; margin-top: 10px;">
-                                    <span style="color: #28a745; font-weight: bold;">●</span> Ativos: ${ativos} (${pA}%) | 
-                                    <span style="color: #dc3545; font-weight: bold;">●</span> Inativos: ${inativos} (${pI}%)
+                                <p style="font-size: 12px; color: var(--muted); margin-top: 10px;">
+                                    <span style="color: var(--green); font-weight: bold;">●</span> Ativos: ${ativos} (${pA}%) | 
+                                    <span style="color: var(--red); font-weight: bold;">●</span> Inativos: ${inativos} (${pI}%)
                                 </p>
                             </div>
                         `;
@@ -636,5 +530,6 @@
             carregarDados();
         };
     </script>
+    <script src="/js/ui.js"></script>
 </body>
 </html>
