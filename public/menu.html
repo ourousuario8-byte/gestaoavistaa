@@ -277,6 +277,7 @@
                 'Alocação BOX': 'fas fa-warehouse',
                 'Coletores': 'fas fa-mobile-alt',
                 'Resumo equipamentos': 'fas fa-mobile-alt',
+                'Recebimento': 'fas fa-truck',
                 'default': 'fas fa-building'
             };
             
@@ -356,6 +357,8 @@
                     window.location.href = '/avaria';                    
                 } else if (areaLower.includes('painel equipamentos') || areaLower.includes('rfid')) {
                     window.location.href = '/resumo-equipamentos';
+                } else if (areaLower.includes('recebimento')) {
+                    window.location.href = '/recebimento';
                 } 
                     
                 // Áreas com múltiplas ferramentas

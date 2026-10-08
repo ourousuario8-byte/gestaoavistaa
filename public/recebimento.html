@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recebimento</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f3f4f8;
+      color: #333;
+      padding: 20px;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .header h1 { font-size: 22px; }
+    .header p { font-size: 14px; opacity: .9; margin-top: 4px; }
+
+    .nav { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .nav a {
+      color: white;
+      text-decoration: none;
+      background: rgba(255,255,255,.18);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .nav a:hover, .nav a.ativo { background: rgba(255,255,255,.35); }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 { font-size: 18px; margin-bottom: 16px; color: #4a4a8a; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .campo-largo { grid-column: 1 / -1; }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 6px;
+      color: #444;
+    }
+
+    label .obrig { color: #d93025; }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d6d8e6;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      background: white;
+    }
+
+    input:focus, select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,.15); }
+
+    .dica { font-size: 12px; color: #888; margin-top: 4px; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .chip { background: #eef0fc; color: #4a4a8a; border-radius: 12px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
+
+    .hora-linha { display: flex; gap: 8px; }
+    .hora-linha button { flex-shrink: 0; }
+
+    .agenda-preview {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .agenda-preview.show { display: block; }
+    .agenda-preview.ok { background: #e6f4ea; color: #1e6b34; border-left: 4px solid #34a853; }
+    .agenda-preview.sem { background: #fff4e5; color: #8a5300; border-left: 4px solid #f29900; }
+    .agenda-preview small { display: block; margin-top: 4px; opacity: .85; }
+
+    .acoes { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 11px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn-primary { background: #667eea; color: white; }
+    .btn-primary:hover { background: #5a6fd6; }
+    .btn-secondary { background: #e8e9f3; color: #444; }
+    .btn-sm { padding: 8px 12px; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .status {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .status.show { display: block; }
+    .status.success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+    .status.error { background: #fdecea; color: #a12622; border-left: 4px solid #d93025; }
+    .status.info { background: #e8f0fe; color: #1a4fa0; border-left: 4px solid #1a73e8; }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .toolbar .filtros { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .toolbar input { width: auto; }
+
+    .resumo { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .resumo span { font-size: 13px; padding: 4px 10px; border-radius: 12px; background: #f1f2f8; }
+
+    .tabela-wrap { overflow: auto; max-height: 520px; border: 1px solid #eee; border-radius: 8px; }
+
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; text-align: left; }
+    th { background: #f6f7fc; position: sticky; top: 0; color: #4a4a8a; white-space: nowrap; }
+
+    .badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .badge-ok { background: #e6f4ea; color: #1e6b34; }
+    .badge-sem { background: #fff4e5; color: #8a5300; }
+
+    .vazio { text-align: center; color: #888; padding: 30px; font-style: italic; }
+
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      .card { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1><i class="fas fa-truck"></i> Recebimento</h1>
+        <p>Registro de recebimento de notas fiscais. Usuário: <span id="userName">-</span></p>
+      </div>
+      <div class="nav">
+        <a href="/recebimento-agenda"><i class="fas fa-file-excel"></i> Agenda</a>
+        <a href="/recebimento" class="ativo"><i class="fas fa-truck"></i> Recebimento</a>
+        <a href="/menu"><i class="fas fa-arrow-left"></i> Menu</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><i class="fas fa-clipboard-check"></i> Novo recebimento</h2>
+      <form id="form" autocomplete="off">
+        <div class="grid">
+          <div class="campo-largo">
+            <label for="notaFiscal">Nota fiscal <span class="obrig">*</span></label>
+            <input type="text" id="notaFiscal" placeholder="Ex.: 12345, 12346, 12347" required>
+            <div class="dica">Várias notas separadas por vírgula</div>
+            <div class="chips" id="chipsNF"></div>
+          </div>
+
+          <div class="campo-largo">
+            <label for="fornecedor">Fornecedor <span class="obrig">*</span></label>
+            <input type="text" id="fornecedor" list="listaFornecedores" placeholder="Digite para buscar..." required>
+            <datalist id="listaFornecedores"></datalist>
+          </div>
+
+          <div>
+            <label for="horaInicio">Hora de início <span class="obrig">*</span></label>
+            <div class="hora-linha">
+              <input type="time" id="horaInicio" required>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="agora('horaInicio')" title="Agora"><i class="fas fa-clock"></i></button>
+            </div>
+          </div>
+
+          <div>
+            <label for="horaFim">Hora fim</label>
+            <div class="hora-linha">
+              <input type="time" id="horaFim">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="agora('horaFim')" title="Agora"><i class="fas fa-clock"></i></button>
+            </div>
+          </div>
+
+          <div>
+            <label for="conferente">Conferente <span class="obrig">*</span></label>
+            <input type="text" id="conferente" list="listaConferentes" placeholder="Digite para buscar..." required>
+            <datalist id="listaConferentes"></datalist>
+          </div>
+
+          <div>
+            <label for="observacao">Observação</label>
+            <select id="observacao">
+              <option value="">— Sem observação —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="agenda-preview" id="agendaPreview"></div>
+
+        <div class="acoes">
+          <button type="submit" class="btn btn-primary" id="btnSalvar" disabled>
+            <i class="fas fa-save"></i> Salvar recebimento
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="limparForm()">
+            <i class="fas fa-eraser"></i> Limpar
+          </button>
+        </div>
+        <div class="status" id="status"></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <h2 style="margin:0"><i class="fas fa-list"></i> Recebimentos</h2>
+        <div class="filtros">
+          <input type="date" id="filtroData" onchange="carregarRecebimentos()">
+          <button class="btn btn-secondary btn-sm" onclick="carregarRecebimentos()"><i class="fas fa-sync"></i></button>
+        </div>
+      </div>
+      <div class="resumo" id="resumo"></div>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th><th>Nota Fiscal</th><th>Fornecedor</th><th>Início</th><th>Fim</th>
+              <th>Conferente</th><th>Observação</th><th>Usuário</th><th>Registrado em</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"><tr><td class="vazio" colspan="9">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api/recebimento';
+    const usuario = sessionStorage.getItem('usuario') || '';
+
+    let fornecedores = [];
+    let conferentes = [];
+
+    function esc(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function showStatus(msg, tipo = 'info') {
+      const el = document.getElementById('status');
+      el.innerHTML = msg;
+      el.className = `status show ${tipo}`;
+    }
+
+    async function api(body) {
+      const resp = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = await resp.json().catch(() => ({ ok: false, msg: `HTTP ${resp.status}` }));
+      if (!resp.ok && json.ok !== false) json.ok = false;
+      return json;
+    }
+
+    function separarNotas(texto) {
+      return String(texto || '').split(/[,;\n]/).map(n => n.trim()).filter(Boolean);
+    }
+
+    function horaAtual() {
+      return new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Manaus', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function agora(id) {
+      document.getElementById(id).value = horaAtual();
+    }
+
+    function hojeISO() {
+      const [d, m, a] = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Manaus' }).split('/');
+      return `${a}-${m}-${d}`;
+    }
+
+    async function carregarOpcoes() {
+      try {
+        const r = await api({ action: 'obterOpcoes' });
+        if (!r.ok) throw new Error(r.msg);
+
+        fornecedores = r.fornecedores || [];
+        conferentes = (r.conferentes || []).map(c => c.nome);
+
+        document.getElementById('listaFornecedores').innerHTML =
+          fornecedores.map(f => `<option value="${esc(f)}">`).join('');
+        document.getElementById('listaConferentes').innerHTML =
+          (r.conferentes || []).map(c => `<option value="${esc(c.nome)}">${esc([c.matricula, c.funcao].filter(Boolean).join(' - '))}</option>`).join('');
+        document.getElementById('observacao').innerHTML = '<option value="">— Sem observação —</option>' +
+          (r.observacoes || []).map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+
+        document.getElementById('btnSalvar').disabled = false;
+        if (!fornecedores.length) showStatus('<i class="fas fa-info-circle"></i> Nenhum fornecedor encontrado na aba Fornecedor.', 'info');
+      } catch (e) {
+        showStatus(`<i class="fas fa-exclamation-triangle"></i> Erro ao carregar listas: ${esc(e.message)}`, 'error');
+      }
+    }
+
+    function renderChips() {
+      const notas = separarNotas(document.getElementById('notaFiscal').value);
+      document.getElementById('chipsNF').innerHTML = notas.map(n => `<span class="chip">NF ${esc(n)}</span>`).join('');
+    }
+
+    // Consulta a Agenda para mostrar o status antes de salvar
+    let timerAgenda = null;
+    function agendarVerificacao() {
+      clearTimeout(timerAgenda);
+      timerAgenda = setTimeout(verificarAgenda, 400);
+    }
+
+    async function verificarAgenda() {
+      const preview = document.getElementById('agendaPreview');
+      const fornecedor = document.getElementById('fornecedor').value.trim();
+      if (!fornecedor || !fornecedores.includes(fornecedor)) {
+        preview.className = 'agenda-preview';
+        return;
+      }
+      try {
+        const r = await api({
+          action: 'verificarAgenda',
+          fornecedor,
+          notaFiscal: document.getElementById('notaFiscal').value,
+        });
+        if (!r.ok) throw new Error(r.msg);
+        if (r.status === 'Agendado') {
+          const detalhes = r.agenda
+            ? Object.entries(r.agenda).filter(([, v]) => v).slice(0, 6).map(([k, v]) => `${esc(k)}: ${esc(v)}`).join(' · ')
+            : '';
+          preview.innerHTML = `<i class="fas fa-calendar-check"></i> <strong>Agendado</strong> — fornecedor localizado na Agenda` +
+            (r.notaNaAgenda ? ' (nota fiscal confere)' : '') +
+            (detalhes ? `<small>${detalhes}</small>` : '');
+          preview.className = 'agenda-preview show ok';
+        } else {
+          preview.innerHTML = '<i class="fas fa-calendar-times"></i> <strong>Sem agenda</strong> — fornecedor não localizado na Agenda';
+          preview.className = 'agenda-preview show sem';
+        }
+      } catch (e) {
+        preview.className = 'agenda-preview';
+      }
+    }
+
+    function limparForm() {
+      document.getElementById('form').reset();
+      document.getElementById('chipsNF').innerHTML = '';
+      document.getElementById('agendaPreview').className = 'agenda-preview';
+      agora('horaInicio');
+      document.getElementById('notaFiscal').focus();
+    }
+
+    async function salvar(e) {
+      e.preventDefault();
+
+      const dados = {
+        action: 'salvarRecebimento',
+        notaFiscal: document.getElementById('notaFiscal').value,
+        fornecedor: document.getElementById('fornecedor').value.trim(),
+        horaInicio: document.getElementById('horaInicio').value,
+        horaFim: document.getElementById('horaFim').value,
+        conferente: document.getElementById('conferente').value.trim(),
+        observacao: document.getElementById('observacao').value,
+        usuario,
+      };
+
+      if (!separarNotas(dados.notaFiscal).length) return showStatus('Informe ao menos uma nota fiscal.', 'error');
+      if (!fornecedores.includes(dados.fornecedor)) return showStatus('Selecione um fornecedor da lista (aba Fornecedor).', 'error');
+      if (!conferentes.includes(dados.conferente)) return showStatus('Selecione um conferente da lista (aba Quadro).', 'error');
+      if (dados.horaFim && dados.horaFim < dados.horaInicio) return showStatus('Hora fim não pode ser menor que a hora de início.', 'error');
+
+      const btn = document.getElementById('btnSalvar');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+      try {
+        const r = await api(dados);
+        if (!r.ok) throw new Error(r.msg);
+        const icone = r.status === 'Agendado' ? 'check-circle' : 'exclamation-circle';
+        showStatus(`<i class="fas fa-${icone}"></i> ${esc(r.msg)}`, r.status === 'Agendado' ? 'success' : 'info');
+        limparForm();
+        carregarRecebimentos();
+      } catch (err) {
+        showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(err.message)}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Salvar recebimento';
+      }
+    }
+
+    async function carregarRecebimentos() {
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = '<tr><td class="vazio" colspan="9">Carregando...</td></tr>';
+
+      const iso = document.getElementById('filtroData').value;
+      const data = iso ? iso.split('-').reverse().join('/') : 'todas';
+
+      try {
+        const r = await api({ action: 'obterRecebimentos', filtros: { data } });
+        if (!r.ok) throw new Error(r.msg);
+
+        const dados = r.dados || [];
+        const agendados = dados.filter(d => d['Status'] === 'Agendado').length;
+        document.getElementById('resumo').innerHTML =
+          `<span><strong>${dados.length}</strong> recebimento(s)</span>` +
+          `<span class="badge-ok"><strong>${agendados}</strong> agendado(s)</span>` +
+          `<span class="badge-sem"><strong>${dados.length - agendados}</strong> sem agenda</span>`;
+
+        tbody.innerHTML = dados.length
+          ? dados.map(d => `
+              <tr>
+                <td><span class="badge ${d['Status'] === 'Agendado' ? 'badge-ok' : 'badge-sem'}">${esc(d['Status'])}</span></td>
+                <td>${esc(d['Nota Fiscal'])}</td>
+                <td>${esc(d['Fornecedor'])}</td>
+                <td>${esc(d['Hora Início'])}</td>
+                <td>${esc(d['Hora Fim'])}</td>
+                <td>${esc(d['Conferente'])}</td>
+                <td>${esc(d['Observação'])}</td>
+                <td>${esc(d['Usuário'])}</td>
+                <td>${esc(d['Registrado em'])}</td>
+              </tr>`).join('')
+          : '<tr><td class="vazio" colspan="9">Nenhum recebimento registrado</td></tr>';
+      } catch (e) {
+        tbody.innerHTML = `<tr><td class="vazio" colspan="9">Erro: ${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    document.getElementById('form').addEventListener('submit', salvar);
+    document.getElementById('notaFiscal').addEventListener('input', () => { renderChips(); agendarVerificacao(); });
+    document.getElementById('fornecedor').addEventListener('input', agendarVerificacao);
+
+    document.getElementById('userName').textContent = usuario || '-';
+    document.getElementById('filtroData').value = hojeISO();
+    agora('horaInicio');
+    carregarOpcoes();
+    carregarRecebimentos();
+  </script>
+</body>
+</html>

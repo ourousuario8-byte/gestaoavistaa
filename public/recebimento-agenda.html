@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recebimento - Agenda do Portal</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f3f4f8;
+      color: #333;
+      padding: 20px;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .header h1 { font-size: 22px; }
+    .header p { font-size: 14px; opacity: .9; margin-top: 4px; }
+
+    .nav { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .nav a {
+      color: white;
+      text-decoration: none;
+      background: rgba(255,255,255,.18);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .nav a:hover, .nav a.ativo { background: rgba(255,255,255,.35); }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 { font-size: 18px; margin-bottom: 16px; color: #4a4a8a; }
+
+    .dropzone {
+      border: 2px dashed #b5b9e6;
+      border-radius: 12px;
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: .2s;
+      background: #fafbff;
+    }
+
+    .dropzone:hover, .dropzone.over { border-color: #667eea; background: #f0f2ff; }
+    .dropzone i { font-size: 40px; color: #667eea; margin-bottom: 10px; }
+    .dropzone p { color: #666; }
+    .dropzone strong { color: #333; }
+
+    .opcoes {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .opcoes label { display: flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn-primary { background: #667eea; color: white; }
+    .btn-primary:hover { background: #5a6fd6; }
+    .btn-secondary { background: #e8e9f3; color: #444; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .status {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .status.show { display: block; }
+    .status.success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+    .status.error { background: #fdecea; color: #a12622; border-left: 4px solid #d93025; }
+    .status.info { background: #e8f0fe; color: #1a4fa0; border-left: 4px solid #1a73e8; }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .toolbar input {
+      padding: 9px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      min-width: 240px;
+      font-size: 14px;
+    }
+
+    .contador { font-size: 14px; color: #666; }
+
+    .tabela-wrap { overflow: auto; max-height: 520px; border: 1px solid #eee; border-radius: 8px; }
+
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; text-align: left; white-space: nowrap; }
+    th { background: #f6f7fc; position: sticky; top: 0; color: #4a4a8a; }
+    tr:hover td { background: #fafbff; }
+
+    .vazio { text-align: center; color: #888; padding: 30px; font-style: italic; }
+
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      .toolbar input { min-width: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1><i class="fas fa-calendar-alt"></i> Recebimento — Agenda do Portal</h1>
+        <p>Suba o arquivo Excel exportado do portal para atualizar a aba <strong>Agenda</strong>. Usuário: <span id="userName">-</span></p>
+      </div>
+      <div class="nav">
+        <a href="/recebimento-agenda" class="ativo"><i class="fas fa-file-excel"></i> Agenda</a>
+        <a href="/recebimento"><i class="fas fa-truck"></i> Recebimento</a>
+        <a href="/menu"><i class="fas fa-arrow-left"></i> Menu</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><i class="fas fa-upload"></i> Importar arquivo do portal</h2>
+      <div class="dropzone" id="dropzone">
+        <i class="fas fa-file-excel"></i>
+        <p><strong>Clique ou arraste</strong> o arquivo Excel (.xlsx, .xls ou .csv)</p>
+        <p id="nomeArquivo" style="margin-top:8px"></p>
+      </div>
+      <input type="file" id="arquivo" accept=".xlsx,.xls,.csv" hidden>
+
+      <div class="opcoes">
+        <label><input type="checkbox" id="acrescentar"> Manter dados atuais da Agenda (acrescentar)</label>
+        <button class="btn btn-primary" id="btnImportar" disabled onclick="importar()">
+          <i class="fas fa-cloud-upload-alt"></i> Enviar para Agenda
+        </button>
+        <button class="btn btn-secondary" id="btnLimpar" disabled onclick="limparArquivo()">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <h2 id="tituloTabela" style="margin:0"><i class="fas fa-list"></i> Agenda atual</h2>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+          <span class="contador" id="contador"></span>
+          <input type="text" id="busca" placeholder="Filtrar (fornecedor, NF...)" oninput="renderTabela()">
+          <button class="btn btn-secondary" onclick="carregarAgenda()"><i class="fas fa-sync"></i></button>
+        </div>
+      </div>
+      <div class="tabela-wrap">
+        <table>
+          <thead id="thead"></thead>
+          <tbody id="tbody"><tr><td class="vazio">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api/recebimento';
+
+    // Dados exibidos na tabela: preview do arquivo ou agenda atual
+    let tabela = { headers: [], linhas: [] };
+    let arquivoLido = null;
+
+    function esc(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function showStatus(msg, tipo = 'info') {
+      const el = document.getElementById('status');
+      el.innerHTML = msg;
+      el.className = `status show ${tipo}`;
+    }
+
+    async function api(body) {
+      const resp = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = await resp.json().catch(() => ({ ok: false, msg: `HTTP ${resp.status}` }));
+      if (!resp.ok && json.ok !== false) json.ok = false;
+      return json;
+    }
+
+    function renderTabela() {
+      const filtro = document.getElementById('busca').value.trim().toLowerCase();
+      const linhas = filtro
+        ? tabela.linhas.filter(l => l.some(c => String(c).toLowerCase().includes(filtro)))
+        : tabela.linhas;
+
+      document.getElementById('thead').innerHTML = tabela.headers.length
+        ? '<tr>' + tabela.headers.map(h => `<th>${esc(h)}</th>`).join('') + '</tr>'
+        : '';
+
+      document.getElementById('tbody').innerHTML = linhas.length
+        ? linhas.slice(0, 1000).map(l => '<tr>' + tabela.headers.map((_, i) => `<td>${esc(l[i])}</td>`).join('') + '</tr>').join('')
+        : `<tr><td class="vazio" colspan="${tabela.headers.length || 1}">Nenhum registro</td></tr>`;
+
+      document.getElementById('contador').textContent =
+        `${linhas.length} de ${tabela.linhas.length} linha(s)` + (linhas.length > 1000 ? ' (exibindo 1000)' : '');
+    }
+
+    async function carregarAgenda() {
+      if (arquivoLido) return; // mantém o preview do arquivo
+      document.getElementById('tituloTabela').innerHTML = '<i class="fas fa-list"></i> Agenda atual';
+      document.getElementById('tbody').innerHTML = '<tr><td class="vazio">Carregando...</td></tr>';
+      try {
+        const r = await api({ action: 'obterAgenda' });
+        if (!r.ok) throw new Error(r.msg);
+        tabela = { headers: r.headers, linhas: r.linhas };
+      } catch (e) {
+        tabela = { headers: [], linhas: [] };
+        showStatus(`<i class="fas fa-exclamation-triangle"></i> Erro ao carregar agenda: ${esc(e.message)}`, 'error');
+      }
+      renderTabela();
+    }
+
+    // Converte o arquivo Excel em { headers, linhas }
+    function lerArquivo(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Falha ao ler o arquivo'));
+        reader.onload = e => {
+          try {
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const matriz = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '', dateNF: 'dd/mm/yyyy hh:mm' });
+
+            // Cabeçalho = primeira linha com pelo menos 2 células preenchidas
+            const idxHeader = matriz.findIndex(l => l.filter(c => String(c).trim()).length >= 2);
+            if (idxHeader === -1) throw new Error('Não foi encontrado cabeçalho no arquivo');
+
+            const headers = matriz[idxHeader].map(h => String(h).trim());
+            // Remove colunas totalmente vazias à direita
+            while (headers.length && !headers[headers.length - 1]) headers.pop();
+
+            const linhas = matriz.slice(idxHeader + 1)
+              .map(l => headers.map((_, i) => String(l[i] ?? '').trim()))
+              .filter(l => l.some(Boolean));
+
+            resolve({ headers, linhas });
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    async function selecionarArquivo(file) {
+      if (!file) return;
+      document.getElementById('nomeArquivo').textContent = file.name;
+      showStatus('<i class="fas fa-spinner fa-spin"></i> Lendo arquivo...', 'info');
+      try {
+        arquivoLido = await lerArquivo(file);
+        if (!arquivoLido.linhas.length) throw new Error('Arquivo sem linhas de dados');
+        tabela = arquivoLido;
+        document.getElementById('tituloTabela').innerHTML = `<i class="fas fa-eye"></i> Pré-visualização: ${esc(file.name)}`;
+        renderTabela();
+        document.getElementById('btnImportar').disabled = false;
+        document.getElementById('btnLimpar').disabled = false;
+        showStatus(`<i class="fas fa-check"></i> ${arquivoLido.linhas.length} linha(s) e ${arquivoLido.headers.length} coluna(s) lidas. Confira e clique em <strong>Enviar para Agenda</strong>.`, 'info');
+      } catch (e) {
+        arquivoLido = null;
+        showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(e.message)}`, 'error');
+      }
+    }
+
+    function limparArquivo() {
+      arquivoLido = null;
+      document.getElementById('arquivo').value = '';
+      document.getElementById('nomeArquivo').textContent = '';
+      document.getElementById('btnImportar').disabled = true;
+      document.getElementById('btnLimpar').disabled = true;
+      document.getElementById('status').className = 'status';
+      carregarAgenda();
+    }
+
+    async function importar() {
+      if (!arquivoLido) return;
+      const acrescentar = document.getElementById('acrescentar').checked;
+      if (!acrescentar && !confirm('Os dados atuais da aba Agenda serão substituídos. Continuar?')) return;
+
+      const btn = document.getElementById('btnImportar');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+      try {
+        const r = await api({ action: 'importarAgenda', headers: arquivoLido.headers, linhas: arquivoLido.linhas, acrescentar });
+        if (!r.ok) throw new Error(r.msg);
+        showStatus(`<i class="fas fa-check-circle"></i> ${esc(r.msg)}`, 'success');
+        arquivoLido = null;
+        document.getElementById('arquivo').value = '';
+        document.getElementById('nomeArquivo').textContent = '';
+        document.getElementById('btnLimpar').disabled = true;
+        carregarAgenda();
+      } catch (e) {
+        showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(e.message)}`, 'error');
+        btn.disabled = false;
+      } finally {
+        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Enviar para Agenda';
+      }
+    }
+
+    const dropzone = document.getElementById('dropzone');
+    const inputArquivo = document.getElementById('arquivo');
+    dropzone.addEventListener('click', () => inputArquivo.click());
+    inputArquivo.addEventListener('change', e => selecionarArquivo(e.target.files[0]));
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('over'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzone.classList.remove('over');
+      selecionarArquivo(e.dataTransfer.files[0]);
+    });
+
+    document.getElementById('userName').textContent = sessionStorage.getItem('usuario') || '-';
+    carregarAgenda();
+  </script>
+</body>
+</html>
