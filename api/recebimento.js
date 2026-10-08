@@ -22,11 +22,11 @@ module.exports = async function handler(req, res) {
         return res.status(200).json(await sheetsRecebimento.obterAgenda());
 
       case 'importarAgenda': {
-        const { headers, linhas, acrescentar } = req.body || {};
+        const { headers, linhas } = req.body || {};
         if (!Array.isArray(headers) || !Array.isArray(linhas)) {
           return res.status(400).json({ ok: false, msg: 'Campos obrigatórios: headers, linhas' });
         }
-        return res.status(200).json(await sheetsRecebimento.importarAgenda(headers, linhas, !!acrescentar));
+        return res.status(200).json(await sheetsRecebimento.importarAgenda(headers, linhas));
       }
 
       case 'verificarAgenda': {

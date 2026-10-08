@@ -151,7 +151,7 @@
     <div class="header">
       <div>
         <h1><i class="fas fa-calendar-alt"></i> Recebimento — Agenda do Portal</h1>
-        <p>Suba o arquivo Excel exportado do portal para atualizar a aba <strong>Agenda</strong>. Usuário: <span id="userName">-</span></p>
+        <p>Suba o arquivo Excel do portal: só as linhas novas são adicionadas na aba <strong>Agenda</strong>, com o dia do upload. Usuário: <span id="userName">-</span></p>
       </div>
       <div class="nav">
         <a href="/recebimento-agenda" class="ativo"><i class="fas fa-file-excel"></i> Agenda</a>
@@ -170,7 +170,7 @@
       <input type="file" id="arquivo" accept=".xlsx,.xls,.csv" hidden>
 
       <div class="opcoes">
-        <label><input type="checkbox" id="acrescentar"> Manter dados atuais da Agenda (acrescentar)</label>
+        <span class="contador"><i class="fas fa-info-circle"></i> Linhas já existentes (mesmo Ticket + Nº Nota + Fornecedor) são ignoradas</span>
         <button class="btn btn-primary" id="btnImportar" disabled onclick="importar()">
           <i class="fas fa-cloud-upload-alt"></i> Enviar para Agenda
         </button>
@@ -252,7 +252,7 @@
       try {
         const r = await api({ action: 'obterAgenda' });
         if (!r.ok) throw new Error(r.msg);
-        tabela = { headers: r.headers, linhas: r.linhas };
+        tabela = { headers: r.headers, linhas: r.linhas.slice().reverse() }; // mais recentes primeiro
       } catch (e) {
         tabela = { headers: [], linhas: [] };
         showStatus(`<i class="fas fa-exclamation-triangle"></i> Erro ao carregar agenda: ${esc(e.message)}`, 'error');
@@ -323,14 +323,12 @@
 
     async function importar() {
       if (!arquivoLido) return;
-      const acrescentar = document.getElementById('acrescentar').checked;
-      if (!acrescentar && !confirm('Os dados atuais da aba Agenda serão substituídos. Continuar?')) return;
 
       const btn = document.getElementById('btnImportar');
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
       try {
-        const r = await api({ action: 'importarAgenda', headers: arquivoLido.headers, linhas: arquivoLido.linhas, acrescentar });
+        const r = await api({ action: 'importarAgenda', headers: arquivoLido.headers, linhas: arquivoLido.linhas });
         if (!r.ok) throw new Error(r.msg);
         showStatus(`<i class="fas fa-check-circle"></i> ${esc(r.msg)}`, 'success');
         arquivoLido = null;
