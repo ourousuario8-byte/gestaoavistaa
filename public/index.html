@@ -241,6 +241,7 @@
                     // CORREÇÃO: Salva dados corretamente no sessionStorage
                     sessionStorage.setItem('usuario', result.usuario);
                     sessionStorage.setItem('abas', JSON.stringify(result.abas));
+                    sessionStorage.setItem('token', result.token || '');
                     
                     console.log('Dados salvos no sessionStorage:', {
                         usuario: result.usuario,

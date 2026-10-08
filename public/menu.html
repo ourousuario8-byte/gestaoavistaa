@@ -278,6 +278,7 @@
                 'Coletores': 'fas fa-mobile-alt',
                 'Resumo equipamentos': 'fas fa-mobile-alt',
                 'Recebimento': 'fas fa-truck',
+                'Usuários': 'fas fa-user-shield',
                 'default': 'fas fa-building'
             };
             
@@ -359,6 +360,8 @@
                     window.location.href = '/resumo-equipamentos';
                 } else if (areaLower.includes('recebimento')) {
                     window.location.href = '/recebimento';
+                } else if (areaLower.includes('usuários') || areaLower.includes('usuarios')) {
+                    window.location.href = '/usuarios';
                 } 
                     
                 // Áreas com múltiplas ferramentas

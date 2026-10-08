@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuários e Permissões</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f3f4f8;
+      color: #333;
+      padding: 20px;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .header h1 { font-size: 22px; }
+    .header p { font-size: 14px; opacity: .9; margin-top: 4px; }
+
+    .nav a {
+      color: white;
+      text-decoration: none;
+      background: rgba(255,255,255,.18);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .nav a:hover { background: rgba(255,255,255,.35); }
+
+    .layout { display: grid; grid-template-columns: 1fr 1.3fr; gap: 20px; align-items: start; }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      padding: 24px;
+    }
+
+    .card h2 { font-size: 18px; margin-bottom: 16px; color: #4a4a8a; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+
+    label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; color: #444; }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d6d8e6;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,.15); }
+    input:disabled { background: #f3f4f8; color: #777; }
+
+    .campo { margin-bottom: 16px; }
+    .dica { font-size: 12px; color: #888; margin-top: 4px; }
+
+    .areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+
+    .area-opcao {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid #e3e5f0;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .area-opcao:hover { border-color: #b5b9e6; }
+    .area-opcao.marcada { background: #eef0fc; border-color: #667eea; }
+    .area-opcao input { accent-color: #667eea; }
+
+    .nova-area { display: flex; gap: 8px; margin-top: 10px; }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .btn-primary { background: #667eea; color: white; }
+    .btn-primary:hover { background: #5a6fd6; }
+    .btn-secondary { background: #e8e9f3; color: #444; }
+    .btn-danger { background: #fdecea; color: #a12622; }
+    .btn-sm { padding: 6px 10px; font-size: 13px; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .acoes { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+
+    .status { padding: 12px 16px; border-radius: 8px; margin-top: 16px; display: none; font-size: 14px; }
+    .status.show { display: block; }
+    .status.success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+    .status.error { background: #fdecea; color: #a12622; border-left: 4px solid #d93025; }
+
+    .busca { width: 100%; margin-bottom: 12px; }
+
+    .usuario {
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .usuario.editando { border-color: #667eea; background: #fafbff; }
+    .usuario strong { font-size: 15px; }
+    .usuario .botoes { display: flex; gap: 6px; flex-shrink: 0; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+    .chip { background: #eef0fc; color: #4a4a8a; border-radius: 12px; padding: 2px 9px; font-size: 12px; font-weight: 600; }
+    .chip.admin { background: #fff4e5; color: #8a5300; }
+
+    .vazio { text-align: center; color: #888; padding: 30px; font-style: italic; }
+
+    .bloqueio { text-align: center; padding: 60px 20px; }
+    .bloqueio i { font-size: 48px; color: #d93025; margin-bottom: 12px; }
+
+    @media (max-width: 800px) {
+      body { padding: 10px; }
+      .layout { grid-template-columns: 1fr; }
+      .card { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1><i class="fas fa-user-shield"></i> Usuários e Permissões</h1>
+        <p>Cadastre usuários e escolha quais painéis cada um acessa. Logado como: <span id="userName">-</span></p>
+      </div>
+      <div class="nav">
+        <a href="/menu"><i class="fas fa-arrow-left"></i> Menu</a>
+      </div>
+    </div>
+
+    <div id="conteudo" class="layout">
+      <div class="card">
+        <h2 id="tituloForm"><span><i class="fas fa-user-plus"></i> Novo usuário</span></h2>
+        <form id="form" autocomplete="off">
+          <div class="campo">
+            <label for="usuario">Usuário</label>
+            <input type="text" id="usuario" placeholder="ex.: joao.silva" required>
+          </div>
+
+          <div class="campo">
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" placeholder="Senha de acesso" autocomplete="new-password">
+            <div class="dica" id="dicaSenha">Obrigatória para novo usuário</div>
+          </div>
+
+          <div class="campo">
+            <label>Painéis com acesso</label>
+            <div class="areas" id="areas"></div>
+            <div class="nova-area">
+              <input type="text" id="novaArea" placeholder="Outra área (ex.: WMS TA)">
+              <button type="button" class="btn btn-secondary" onclick="adicionarArea()"><i class="fas fa-plus"></i></button>
+            </div>
+            <div class="dica">Áreas que não são painéis específicos abrem o Painel de Presença com o nome da área.</div>
+          </div>
+
+          <div class="acoes">
+            <button type="submit" class="btn btn-primary" id="btnSalvar"><i class="fas fa-save"></i> Salvar</button>
+            <button type="button" class="btn btn-secondary" onclick="novoUsuario()"><i class="fas fa-eraser"></i> Limpar</button>
+          </div>
+          <div class="status" id="status"></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>
+          <span><i class="fas fa-users"></i> Usuários <small id="total" style="color:#888;font-weight:normal"></small></span>
+          <button class="btn btn-secondary btn-sm" onclick="carregar()"><i class="fas fa-sync"></i></button>
+        </h2>
+        <input type="text" class="busca" id="busca" placeholder="Buscar usuário ou painel..." oninput="renderLista()" style="padding:10px 12px;border:1px solid #d6d8e6;border-radius:8px;font-size:14px">
+        <div id="lista"><div class="vazio">Carregando...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api/usuarios';
+    const token = sessionStorage.getItem('token') || '';
+    const usuarioLogado = sessionStorage.getItem('usuario') || '';
+
+    let usuarios = [];
+    let areas = [];
+    let areaAdmin = 'Usuários';
+    let editando = null; // usuário em edição (null = novo)
+
+    function esc(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function showStatus(msg, tipo) {
+      const el = document.getElementById('status');
+      el.innerHTML = msg;
+      el.className = `status show ${tipo}`;
+    }
+
+    async function api(body) {
+      const resp = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, token }),
+      });
+      const json = await resp.json().catch(() => ({ ok: false, msg: `HTTP ${resp.status}` }));
+      json.httpStatus = resp.status;
+      return json;
+    }
+
+    function bloquear(msg) {
+      document.getElementById('conteudo').outerHTML = `
+        <div class="card bloqueio">
+          <i class="fas fa-lock"></i>
+          <h2 style="justify-content:center">${esc(msg)}</h2>
+          <p style="margin-top:12px"><a href="/" class="btn btn-primary" style="text-decoration:none">Ir para o login</a></p>
+        </div>`;
+    }
+
+    function renderAreas(marcadas = []) {
+      document.getElementById('areas').innerHTML = areas.map(a => {
+        const marcada = marcadas.includes(a);
+        return `<label class="area-opcao ${marcada ? 'marcada' : ''}">
+          <input type="checkbox" value="${esc(a)}" ${marcada ? 'checked' : ''} onchange="this.parentElement.classList.toggle('marcada', this.checked)">
+          ${a === areaAdmin ? '<i class="fas fa-user-shield" style="color:#8a5300"></i>' : ''} ${esc(a)}
+        </label>`;
+      }).join('');
+    }
+
+    function areasMarcadas() {
+      return [...document.querySelectorAll('#areas input:checked')].map(i => i.value);
+    }
+
+    function adicionarArea() {
+      const input = document.getElementById('novaArea');
+      const nome = input.value.trim();
+      if (!nome) return;
+      const marcadas = areasMarcadas();
+      const existente = areas.find(a => a.toLowerCase() === nome.toLowerCase());
+      if (!existente) areas.push(nome);
+      marcadas.push(existente || nome);
+      renderAreas(marcadas);
+      input.value = '';
+    }
+
+    function renderLista() {
+      const filtro = document.getElementById('busca').value.trim().toLowerCase();
+      const lista = filtro
+        ? usuarios.filter(u => u.usuario.toLowerCase().includes(filtro) || u.abas.some(a => a.toLowerCase().includes(filtro)))
+        : usuarios;
+
+      document.getElementById('total').textContent = `(${usuarios.length})`;
+      document.getElementById('lista').innerHTML = lista.length
+        ? lista.map(u => `
+            <div class="usuario ${editando === u.usuario ? 'editando' : ''}">
+              <div>
+                <strong><i class="fas fa-user-circle" style="color:#667eea"></i> ${esc(u.usuario)}</strong>
+                ${u.usuario === usuarioLogado ? '<small style="color:#888">(você)</small>' : ''}
+                <div class="chips">${u.abas.map(a => `<span class="chip ${a === areaAdmin ? 'admin' : ''}">${esc(a)}</span>`).join('')}</div>
+              </div>
+              <div class="botoes">
+                <button class="btn btn-secondary btn-sm" data-u="${esc(u.usuario)}" onclick="editar(this.dataset.u)" title="Editar"><i class="fas fa-pen"></i></button>
+                ${u.usuario === usuarioLogado ? '' : `<button class="btn btn-danger btn-sm" data-u="${esc(u.usuario)}" onclick="excluir(this.dataset.u)" title="Excluir"><i class="fas fa-trash"></i></button>`}
+              </div>
+            </div>`).join('')
+        : '<div class="vazio">Nenhum usuário encontrado</div>';
+    }
+
+    function novoUsuario() {
+      editando = null;
+      document.getElementById('form').reset();
+      document.getElementById('usuario').disabled = false;
+      document.getElementById('tituloForm').innerHTML = '<span><i class="fas fa-user-plus"></i> Novo usuário</span>';
+      document.getElementById('dicaSenha').textContent = 'Obrigatória para novo usuário';
+      document.getElementById('status').className = 'status';
+      renderAreas([]);
+      renderLista();
+      document.getElementById('usuario').focus();
+    }
+
+    function editar(nome) {
+      const u = usuarios.find(x => x.usuario === nome);
+      if (!u) return;
+      editando = u.usuario;
+      document.getElementById('usuario').value = u.usuario;
+      document.getElementById('usuario').disabled = true;
+      document.getElementById('senha').value = '';
+      document.getElementById('tituloForm').innerHTML = `<span><i class="fas fa-user-edit"></i> Editando ${esc(u.usuario)}</span>`;
+      document.getElementById('dicaSenha').textContent = 'Deixe em branco para manter a senha atual';
+      document.getElementById('status').className = 'status';
+      renderAreas(u.abas);
+      renderLista();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function excluir(nome) {
+      if (!confirm(`Excluir o usuário "${nome}"? Ele perde o acesso a todos os painéis.`)) return;
+      const r = await api({ action: 'excluir', usuario: nome });
+      if (!r.ok) return showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(r.msg)}`, 'error');
+      showStatus(`<i class="fas fa-check-circle"></i> ${esc(r.msg)}`, 'success');
+      if (editando === nome) novoUsuario();
+      carregar();
+    }
+
+    async function salvar(e) {
+      e.preventDefault();
+      const dados = {
+        action: 'salvar',
+        usuario: document.getElementById('usuario').value.trim(),
+        senha: document.getElementById('senha').value.trim(),
+        abas: areasMarcadas(),
+        novo: !editando,
+      };
+
+      if (!dados.usuario) return showStatus('Informe o usuário.', 'error');
+      if (!editando && !dados.senha) return showStatus('Informe a senha.', 'error');
+      if (!dados.abas.length) return showStatus('Selecione ao menos um painel.', 'error');
+
+      const btn = document.getElementById('btnSalvar');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+      try {
+        const r = await api(dados);
+        if (!r.ok) throw new Error(r.msg);
+        const salvo = dados.usuario;
+        await carregar();
+        editar(salvo);
+        showStatus(`<i class="fas fa-check-circle"></i> ${esc(r.msg)}`, 'success');
+      } catch (err) {
+        showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(err.message)}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Salvar';
+      }
+    }
+
+    async function carregar() {
+      const r = await api({ action: 'listar' });
+      if (r.httpStatus === 401 || r.httpStatus === 403) return bloquear(r.msg);
+      if (!r.ok) {
+        document.getElementById('lista').innerHTML = `<div class="vazio">Erro: ${esc(r.msg)}</div>`;
+        return;
+      }
+      usuarios = r.usuarios;
+      areaAdmin = r.areaAdmin;
+      // Mantém áreas adicionadas manualmente que ainda não foram salvas
+      areas = [...new Set([...r.areas, ...areas])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      if (!editando) renderAreas(areasMarcadas());
+      renderLista();
+    }
+
+    document.getElementById('form').addEventListener('submit', salvar);
+    document.getElementById('novaArea').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); adicionarArea(); }
+    });
+
+    document.getElementById('userName').textContent = usuarioLogado || '-';
+    if (!token) bloquear('Sessão expirada. Faça login novamente.');
+    else carregar();
+  </script>
+</body>
+</html>

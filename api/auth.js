@@ -1,5 +1,6 @@
 // api/auth.js - VERSÃO CORRIGIDA
 const sheetsService = require('../lib/sheets');
+const { gerarToken } = require('../lib/auth_token');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -39,6 +40,7 @@ module.exports = async function handler(req, res) {
       try {
         const result = await sheetsService.validarLogin(usuario, senha);
         console.log(`[AUTH] Resultado do login:`, result);
+        if (result.ok) result.token = gerarToken(result.usuario, result.abas);
         return res.status(200).json(result);
       } catch (loginError) {
         console.error('[AUTH] Erro no processo de login:', loginError);
