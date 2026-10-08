@@ -1,0 +1,300 @@
+/* ===== Tema claro em tons pastel — compartilhado pelas telas ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg:           #f7f6f2;
+  --surface:      #ffffff;
+  --surface-2:    #fbfaf7;
+  --border:       #ebe8e1;
+  --border-forte: #dcd8cf;
+  --text:         #2f3437;
+  --muted:        #80848c;
+
+  --primary:      #6f7fc9;
+  --primary-hover:#5f6fba;
+  --primary-soft: #eef0fa;
+  --primary-text: #4c5aa0;
+
+  --green-soft:   #e7f3ea;  --green:  #2f7a4f;
+  --red-soft:     #fbebea;  --red:    #b4443f;
+  --amber-soft:   #fcf2de;  --amber:  #93650f;
+  --blue-soft:    #e6f0f7;  --blue:   #2f6b8f;
+  --lilac-soft:   #f2edf8;  --lilac:  #6c4f99;
+  --peach-soft:   #fcefe7;  --peach:  #a2583a;
+
+  --radius:       14px;
+  --radius-sm:    10px;
+  --shadow:       0 1px 2px rgba(47, 52, 55, .04), 0 4px 16px rgba(47, 52, 55, .04);
+  --gutter:       clamp(12px, 3vw, 32px);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.5;
+  padding: var(--gutter);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container { max-width: 1440px; margin: 0 auto; }
+
+/* ===== Cabeçalho ===== */
+.header {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  font-size: clamp(19px, 2.4vw, 24px);
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -.01em;
+}
+
+.header h1 i {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.header p { font-size: 14px; color: var(--muted); margin-top: 4px; }
+.header p strong { color: var(--text); }
+
+.nav, .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.nav a {
+  color: var(--muted);
+  text-decoration: none;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: .15s;
+}
+
+.nav a:hover { color: var(--text); border-color: var(--border-forte); }
+.nav a.ativo { background: var(--primary-soft); border-color: transparent; color: var(--primary-text); }
+
+/* ===== Cartões ===== */
+.card, .secao, .filtros {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: clamp(16px, 2.5vw, 24px);
+  margin-bottom: 20px;
+}
+
+.card h2 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 18px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card h2 i, .secao-header h2 i, .filtros h3 i { color: var(--primary); }
+
+/* ===== Formulários ===== */
+label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color: var(--text); }
+label .obrig { color: var(--red); }
+
+input, select, textarea {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--border-forte);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color .15s, box-shadow .15s;
+}
+
+input[type="checkbox"], input[type="radio"] { width: auto; accent-color: var(--primary); }
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+input:disabled, input[readonly], textarea[readonly] { background: var(--surface-2); color: var(--muted); }
+
+.dica { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.campo-largo { grid-column: 1 / -1; }
+
+/* ===== Botões ===== */
+.btn {
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s, color .15s;
+}
+
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border-forte); }
+.btn-secondary:hover { background: var(--surface-2); }
+.btn-success { background: var(--green-soft); color: var(--green); }
+.btn-info { background: var(--blue-soft); color: var(--blue); }
+.btn-warning { background: var(--amber-soft); color: var(--amber); }
+.btn-danger { background: var(--red-soft); color: var(--red); }
+.btn-sm { padding: 7px 11px; font-size: 13px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.acoes { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+
+/* ===== Mensagens ===== */
+.status {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-top: 16px;
+  display: none;
+  font-size: 14px;
+}
+
+.status.show { display: block; }
+.status.success { background: var(--green-soft); color: var(--green); }
+.status.error   { background: var(--red-soft);   color: var(--red); }
+.status.info    { background: var(--blue-soft);  color: var(--blue); }
+
+/* ===== Tabelas ===== */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.toolbar h2 { margin: 0; }
+.toolbar .filtros-linha { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.toolbar .filtros-linha input { width: auto; min-width: 220px; }
+
+.contador { font-size: 13px; color: var(--muted); }
+
+.tabela-wrap, .tabela-container {
+  overflow: auto;
+  max-height: 560px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  -webkit-overflow-scrolling: touch;
+}
+
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+
+th, td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+th {
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #fcfbf8; }
+
+.vazio { text-align: center; color: var(--muted); padding: 36px; }
+
+/* ===== Badges e chips ===== */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-ok, .badge-success { background: var(--green-soft); color: var(--green); }
+.badge-sem, .badge-warning { background: var(--amber-soft); color: var(--amber); }
+.badge-danger { background: var(--red-soft); color: var(--red); }
+.badge-primary { background: var(--primary-soft); color: var(--primary-text); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+.chip {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chip.admin { background: var(--peach-soft); color: var(--peach); }
+
+/* ===== Celular ===== */
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+  .header { padding: 16px; }
+  .header > div:first-child { width: 100%; }
+  .nav { width: 100%; }
+  .nav a { flex: 1; justify-content: center; }
+  .acoes .btn { flex: 1; }
+  .toolbar .filtros-linha { width: 100%; }
+  .toolbar .filtros-linha .contador { width: 100%; }
+  .toolbar .filtros-linha input { flex: 1; min-width: 0; }
+  th, td { padding: 9px 10px; }
+  input, select, textarea { font-size: 16px; } /* evita zoom no iOS */
+}

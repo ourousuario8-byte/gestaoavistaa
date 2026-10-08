@@ -5,172 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recebimento</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="/css/tema.css" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f3f4f8;
-      color: #333;
-      padding: 20px;
-    }
-
-    .container { max-width: 1200px; margin: 0 auto; }
-
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 20px 30px;
-      border-radius: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .header h1 { font-size: 22px; }
-    .header p { font-size: 14px; opacity: .9; margin-top: 4px; }
-
-    .nav { display: flex; gap: 8px; flex-wrap: wrap; }
-
-    .nav a {
-      color: white;
-      text-decoration: none;
-      background: rgba(255,255,255,.18);
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-
-    .nav a:hover, .nav a.ativo { background: rgba(255,255,255,.35); }
-
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.06);
-      padding: 24px;
-      margin-bottom: 20px;
-    }
-
-    .card h2 { font-size: 18px; margin-bottom: 16px; color: #4a4a8a; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-    }
-
-    .campo-largo { grid-column: 1 / -1; }
-
-    label {
-      display: block;
-      font-weight: 600;
-      font-size: 14px;
-      margin-bottom: 6px;
-      color: #444;
-    }
-
-    label .obrig { color: #d93025; }
-
-    input, select, textarea {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #d6d8e6;
-      border-radius: 8px;
-      font-size: 15px;
-      font-family: inherit;
-      background: white;
-    }
-
-    input:focus, select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,.15); }
-
-    .dica { font-size: 12px; color: #888; margin-top: 4px; }
-
-    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .chip { background: #eef0fc; color: #4a4a8a; border-radius: 12px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
-
     .hora-linha { display: flex; gap: 8px; }
-    .hora-linha button { flex-shrink: 0; }
+    .hora-linha .btn { flex-shrink: 0; }
 
     .agenda-preview {
-      margin-top: 16px;
+      margin-top: 18px;
       padding: 12px 16px;
-      border-radius: 8px;
+      border-radius: var(--radius-sm);
       font-size: 14px;
       display: none;
     }
 
     .agenda-preview.show { display: block; }
-    .agenda-preview.ok { background: #e6f4ea; color: #1e6b34; border-left: 4px solid #34a853; }
-    .agenda-preview.sem { background: #fff4e5; color: #8a5300; border-left: 4px solid #f29900; }
+    .agenda-preview.ok  { background: var(--green-soft); color: var(--green); }
+    .agenda-preview.sem { background: var(--amber-soft); color: var(--amber); }
     .agenda-preview small { display: block; margin-top: 4px; opacity: .85; }
 
-    .acoes { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .resumo { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .resumo span { font-size: 13px; padding: 5px 12px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); }
+    .resumo span.badge-ok, .resumo span.badge-sem { border-color: transparent; }
 
-    .btn {
-      border: none;
-      border-radius: 8px;
-      padding: 11px 20px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .btn-primary { background: #667eea; color: white; }
-    .btn-primary:hover { background: #5a6fd6; }
-    .btn-secondary { background: #e8e9f3; color: #444; }
-    .btn-sm { padding: 8px 12px; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
-
-    .status {
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin-top: 16px;
-      display: none;
-      font-size: 14px;
-    }
-
-    .status.show { display: block; }
-    .status.success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
-    .status.error { background: #fdecea; color: #a12622; border-left: 4px solid #d93025; }
-    .status.info { background: #e8f0fe; color: #1a4fa0; border-left: 4px solid #1a73e8; }
-
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .toolbar .filtros { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .toolbar input { width: auto; }
-
-    .resumo { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-    .resumo span { font-size: 13px; padding: 4px 10px; border-radius: 12px; background: #f1f2f8; }
-
-    .tabela-wrap { overflow: auto; max-height: 520px; border: 1px solid #eee; border-radius: 8px; }
-
-    table { border-collapse: collapse; width: 100%; font-size: 13px; }
-    th, td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; text-align: left; }
-    th { background: #f6f7fc; position: sticky; top: 0; color: #4a4a8a; white-space: nowrap; }
-
-    .badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-    .badge-ok { background: #e6f4ea; color: #1e6b34; }
-    .badge-sem { background: #fff4e5; color: #8a5300; }
-
-    .vazio { text-align: center; color: #888; padding: 30px; font-style: italic; }
-
-    @media (max-width: 600px) {
-      body { padding: 10px; }
-      .card { padding: 16px; }
-    }
+    td { vertical-align: top; }
   </style>
 </head>
 <body>
@@ -250,8 +107,8 @@
 
     <div class="card">
       <div class="toolbar">
-        <h2 style="margin:0"><i class="fas fa-list"></i> Recebimentos</h2>
-        <div class="filtros">
+        <h2><i class="fas fa-list"></i> Recebimentos</h2>
+        <div class="filtros-linha">
           <input type="date" id="filtroData" onchange="carregarRecebimentos()">
           <button class="btn btn-secondary btn-sm" onclick="carregarRecebimentos()"><i class="fas fa-sync"></i></button>
         </div>

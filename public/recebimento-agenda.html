@@ -6,143 +6,29 @@
   <title>Recebimento - Agenda do Portal</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link href="/css/tema.css" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f3f4f8;
-      color: #333;
-      padding: 20px;
-    }
-
-    .container { max-width: 1200px; margin: 0 auto; }
-
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 20px 30px;
-      border-radius: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .header h1 { font-size: 22px; }
-    .header p { font-size: 14px; opacity: .9; margin-top: 4px; }
-
-    .nav { display: flex; gap: 8px; flex-wrap: wrap; }
-
-    .nav a {
-      color: white;
-      text-decoration: none;
-      background: rgba(255,255,255,.18);
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-
-    .nav a:hover, .nav a.ativo { background: rgba(255,255,255,.35); }
-
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.06);
-      padding: 24px;
-      margin-bottom: 20px;
-    }
-
-    .card h2 { font-size: 18px; margin-bottom: 16px; color: #4a4a8a; }
-
     .dropzone {
-      border: 2px dashed #b5b9e6;
-      border-radius: 12px;
-      padding: 36px 20px;
+      border: 2px dashed var(--border-forte);
+      border-radius: var(--radius);
+      padding: clamp(28px, 5vw, 48px) 20px;
       text-align: center;
       cursor: pointer;
-      transition: .2s;
-      background: #fafbff;
+      transition: .15s;
+      background: var(--surface-2);
     }
 
-    .dropzone:hover, .dropzone.over { border-color: #667eea; background: #f0f2ff; }
-    .dropzone i { font-size: 40px; color: #667eea; margin-bottom: 10px; }
-    .dropzone p { color: #666; }
-    .dropzone strong { color: #333; }
+    .dropzone:hover, .dropzone.over { border-color: var(--primary); background: var(--primary-soft); }
+    .dropzone i { font-size: 36px; color: var(--primary); margin-bottom: 10px; }
+    .dropzone p { color: var(--muted); }
+    .dropzone strong { color: var(--text); }
 
-    .opcoes {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-top: 16px;
-    }
+    .opcoes { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
 
-    .opcoes label { display: flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+    td { white-space: nowrap; }
 
-    .btn {
-      border: none;
-      border-radius: 8px;
-      padding: 10px 18px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .btn-primary { background: #667eea; color: white; }
-    .btn-primary:hover { background: #5a6fd6; }
-    .btn-secondary { background: #e8e9f3; color: #444; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
-
-    .status {
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin-top: 16px;
-      display: none;
-      font-size: 14px;
-    }
-
-    .status.show { display: block; }
-    .status.success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
-    .status.error { background: #fdecea; color: #a12622; border-left: 4px solid #d93025; }
-    .status.info { background: #e8f0fe; color: #1a4fa0; border-left: 4px solid #1a73e8; }
-
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .toolbar input {
-      padding: 9px 12px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      min-width: 240px;
-      font-size: 14px;
-    }
-
-    .contador { font-size: 14px; color: #666; }
-
-    .tabela-wrap { overflow: auto; max-height: 520px; border: 1px solid #eee; border-radius: 8px; }
-
-    table { border-collapse: collapse; width: 100%; font-size: 13px; }
-    th, td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; text-align: left; white-space: nowrap; }
-    th { background: #f6f7fc; position: sticky; top: 0; color: #4a4a8a; }
-    tr:hover td { background: #fafbff; }
-
-    .vazio { text-align: center; color: #888; padding: 30px; font-style: italic; }
-
-    @media (max-width: 600px) {
-      body { padding: 10px; }
-      .toolbar input { min-width: 0; width: 100%; }
+    @media (max-width: 640px) {
+      .opcoes .btn { flex: 1; }
     }
   </style>
 </head>
@@ -165,7 +51,7 @@
       <div class="dropzone" id="dropzone">
         <i class="fas fa-file-excel"></i>
         <p><strong>Clique ou arraste</strong> o arquivo Excel (.xlsx, .xls ou .csv)</p>
-        <p id="nomeArquivo" style="margin-top:8px"></p>
+        <p id="nomeArquivo" style="margin-top:8px; color:var(--text); font-weight:600"></p>
       </div>
       <input type="file" id="arquivo" accept=".xlsx,.xls,.csv" hidden>
 
@@ -183,8 +69,8 @@
 
     <div class="card">
       <div class="toolbar">
-        <h2 id="tituloTabela" style="margin:0"><i class="fas fa-list"></i> Agenda atual</h2>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+        <h2 id="tituloTabela"><i class="fas fa-list"></i> Agenda atual</h2>
+        <div class="filtros-linha">
           <span class="contador" id="contador"></span>
           <input type="text" id="busca" placeholder="Filtrar (fornecedor, NF...)" oninput="renderTabela()">
           <button class="btn btn-secondary" onclick="carregarAgenda()"><i class="fas fa-sync"></i></button>
