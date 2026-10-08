@@ -1,6 +1,10 @@
 const sheetsRecebimento = require('../lib/sheets_recebimento');
 
-const ACOES = ['obterOpcoes', 'obterAgenda', 'importarAgenda', 'verificarAgenda', 'salvarRecebimento', 'obterRecebimentos', 'testarConexao'];
+const ACOES = [
+  'obterOpcoes', 'obterAgenda', 'importarAgenda', 'verificarAgenda',
+  'registrarChegada', 'registrarInicio', 'registrarFim', 'atualizarCarga',
+  'obterRecebimentos', 'testarConexao',
+];
 
 module.exports = async function handler(req, res) {
   // CORS
@@ -37,8 +41,17 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true, ...resultado });
       }
 
-      case 'salvarRecebimento':
-        return res.status(200).json(await sheetsRecebimento.salvarRecebimento(req.body || {}));
+      case 'registrarChegada':
+        return res.status(200).json(await sheetsRecebimento.registrarChegada(req.body || {}));
+
+      case 'registrarInicio':
+        return res.status(200).json(await sheetsRecebimento.registrarInicio(req.body || {}));
+
+      case 'registrarFim':
+        return res.status(200).json(await sheetsRecebimento.registrarFim(req.body || {}));
+
+      case 'atualizarCarga':
+        return res.status(200).json(await sheetsRecebimento.atualizarCarga(req.body || {}));
 
       case 'obterRecebimentos': {
         const filtros = req.method === 'POST' ? req.body?.filtros : req.query;

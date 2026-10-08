@@ -6,28 +6,77 @@
   <title>Recebimento</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link href="/css/tema.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
+    .painel { display: none; }
+    .painel.ativo { display: block; }
+
+    .dropzone {
+      border: 2px dashed var(--border-forte);
+      border-radius: var(--radius);
+      padding: clamp(28px, 5vw, 44px) 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: .15s;
+      background: var(--surface-2);
+    }
+
+    .dropzone:hover, .dropzone.over { border-color: var(--primary); background: var(--primary-soft); }
+    .dropzone i { font-size: 34px; color: var(--primary); margin-bottom: 10px; }
+    .dropzone p { color: var(--muted); }
+    .dropzone strong { color: var(--text); }
+
+    .linha-acoes { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+
     .hora-linha { display: flex; gap: 8px; }
     .hora-linha .btn { flex-shrink: 0; }
 
-    .agenda-preview {
-      margin-top: 18px;
+    .sugestoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+    .sugestoes .rot { font-size: 12px; color: var(--muted); }
+
+    .chip-btn {
+      border: 1px dashed var(--border-forte);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .chip-btn:hover { border-color: var(--primary); color: var(--primary-text); }
+    .chip-btn.usada { border-style: solid; background: var(--primary-soft); color: var(--primary-text); border-color: transparent; }
+
+    .aviso {
+      margin-top: 16px;
       padding: 12px 16px;
       border-radius: var(--radius-sm);
       font-size: 14px;
       display: none;
     }
 
-    .agenda-preview.show { display: block; }
-    .agenda-preview.ok  { background: var(--green-soft); color: var(--green); }
-    .agenda-preview.sem { background: var(--amber-soft); color: var(--amber); }
-    .agenda-preview small { display: block; margin-top: 4px; opacity: .85; }
+    .aviso.show { display: block; }
+    .aviso.ok  { background: var(--green-soft); color: var(--green); }
+    .aviso.sem { background: var(--amber-soft); color: var(--amber); }
+
+    .oculto { display: none !important; }
 
     .resumo { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
     .resumo span { font-size: 13px; padding: 5px 12px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); }
-    .resumo span.badge-ok, .resumo span.badge-sem { border-color: transparent; }
+    .resumo span.badge-ok, .resumo span.badge-sem, .resumo span.badge-primary { border-color: transparent; }
 
-    td { vertical-align: top; }
+    td { white-space: nowrap; vertical-align: middle; }
+    td.quebra { white-space: normal; min-width: 160px; }
+
+    .badge-etapa-aguardando { background: var(--amber-soft); color: var(--amber); }
+    .badge-etapa-conferencia { background: var(--blue-soft); color: var(--blue); }
+    .badge-etapa-finalizado { background: var(--green-soft); color: var(--green); }
+
+    .carga-cel { display: flex; align-items: center; gap: 6px; }
+    .carga-cel input { width: 110px; padding: 6px 8px; font-size: 13px; }
+    .link-btn { background: none; border: none; color: var(--primary-text); cursor: pointer; font-size: 13px; padding: 4px; }
   </style>
 </head>
 <body>
@@ -35,82 +84,192 @@
     <div class="header">
       <div>
         <h1><i class="fas fa-truck"></i> Recebimento</h1>
-        <p>Registro de recebimento de notas fiscais. Usuário: <span id="userName">-</span></p>
+        <p>Agenda, chegada, início e fim da conferência. Usuário: <span id="userName">-</span></p>
       </div>
       <div class="nav">
-        <a href="/recebimento-agenda"><i class="fas fa-file-excel"></i> Agenda</a>
-        <a href="/recebimento" class="ativo"><i class="fas fa-truck"></i> Recebimento</a>
         <a href="/menu"><i class="fas fa-arrow-left"></i> Menu</a>
       </div>
     </div>
 
-    <div class="card">
-      <h2><i class="fas fa-clipboard-check"></i> Novo recebimento</h2>
-      <form id="form" autocomplete="off">
-        <div class="grid">
-          <div class="campo-largo">
-            <label for="notaFiscal">Nota fiscal <span class="obrig">*</span></label>
-            <input type="text" id="notaFiscal" placeholder="Ex.: 12345, 12346, 12347" required>
-            <div class="dica">Várias notas separadas por vírgula</div>
-            <div class="chips" id="chipsNF"></div>
-          </div>
-
-          <div class="campo-largo">
-            <label for="fornecedor">Fornecedor <span class="obrig">*</span></label>
-            <input type="text" id="fornecedor" list="listaFornecedores" placeholder="Digite para buscar..." required>
-            <datalist id="listaFornecedores"></datalist>
-          </div>
-
-          <div>
-            <label for="horaInicio">Hora de início <span class="obrig">*</span></label>
-            <div class="hora-linha">
-              <input type="time" id="horaInicio" required>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="agora('horaInicio')" title="Agora"><i class="fas fa-clock"></i></button>
-            </div>
-          </div>
-
-          <div>
-            <label for="horaFim">Hora fim</label>
-            <div class="hora-linha">
-              <input type="time" id="horaFim">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="agora('horaFim')" title="Agora"><i class="fas fa-clock"></i></button>
-            </div>
-          </div>
-
-          <div>
-            <label for="conferente">Conferente <span class="obrig">*</span></label>
-            <input type="text" id="conferente" list="listaConferentes" placeholder="Digite para buscar..." required>
-            <datalist id="listaConferentes"></datalist>
-          </div>
-
-          <div>
-            <label for="observacao">Observação</label>
-            <select id="observacao">
-              <option value="">— Sem observação —</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="agenda-preview" id="agendaPreview"></div>
-
-        <div class="acoes">
-          <button type="submit" class="btn btn-primary" id="btnSalvar" disabled>
-            <i class="fas fa-save"></i> Salvar recebimento
-          </button>
-          <button type="button" class="btn btn-secondary" onclick="limparForm()">
-            <i class="fas fa-eraser"></i> Limpar
-          </button>
-        </div>
-        <div class="status" id="status"></div>
-      </form>
+    <div class="etapas">
+      <button class="etapa" data-etapa="agenda"><span class="num">1</span><span><strong>Agenda</strong><small>Subir arquivo do portal</small></span></button>
+      <button class="etapa" data-etapa="chegada"><span class="num">2</span><span><strong>Chegada</strong><small>Fornecedor e notas</small></span></button>
+      <button class="etapa" data-etapa="inicio"><span class="num">3</span><span><strong>Início</strong><small>Hora e conferente</small></span><span class="qtd" id="qtdInicio"></span></button>
+      <button class="etapa" data-etapa="fim"><span class="num">4</span><span><strong>Fim</strong><small>Hora e divergência</small></span><span class="qtd" id="qtdFim"></span></button>
     </div>
 
-    <div class="card">
+    <!-- ===== 1. AGENDA ===== -->
+    <section class="painel" id="painel-agenda">
+      <div class="card">
+        <h2><i class="fas fa-file-excel"></i> Subir agenda do portal</h2>
+        <div class="dropzone" id="dropzone">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p><strong>Clique ou arraste</strong> o arquivo Excel (.xlsx, .xls ou .csv)</p>
+          <p id="nomeArquivo" style="margin-top:8px; color:var(--text); font-weight:600"></p>
+        </div>
+        <input type="file" id="arquivo" accept=".xlsx,.xls,.csv" hidden>
+        <div class="linha-acoes">
+          <button class="btn btn-primary" id="btnImportar" disabled><i class="fas fa-upload"></i> Enviar para Agenda</button>
+          <button class="btn btn-secondary" id="btnCancelarArquivo" disabled><i class="fas fa-times"></i> Cancelar</button>
+          <span class="contador"><i class="fas fa-info-circle"></i> Só linhas novas são adicionadas (mesmo Ticket + Nº Nota + Fornecedor é ignorado), com a data do upload.</span>
+        </div>
+        <div class="status" id="statusAgenda"></div>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <h2 id="tituloAgenda"><i class="fas fa-list"></i> Agenda</h2>
+          <div class="filtros-linha">
+            <span class="contador" id="contadorAgenda"></span>
+            <input type="text" id="buscaAgenda" placeholder="Filtrar (fornecedor, NF...)">
+            <button class="btn btn-secondary btn-sm" id="btnRecarregarAgenda" title="Atualizar"><i class="fas fa-sync"></i></button>
+          </div>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead id="theadAgenda"></thead>
+            <tbody id="tbodyAgenda"><tr><td class="vazio">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 2. CHEGADA ===== -->
+    <section class="painel" id="painel-chegada">
+      <div class="card">
+        <h2><i class="fas fa-truck-loading"></i> Chegada do fornecedor</h2>
+        <form id="formChegada" autocomplete="off">
+          <div class="grid">
+            <div class="campo-largo">
+              <label for="fornecedor">Fornecedor que chegou <span class="obrig">*</span></label>
+              <select id="fornecedor" data-busca data-placeholder="Selecione o fornecedor"></select>
+            </div>
+
+            <div class="campo-largo">
+              <label for="notaFiscal">Notas fiscais <span class="obrig">*</span></label>
+              <input type="text" id="notaFiscal" placeholder="Ex.: 12345, 12346, 12347">
+              <div class="dica">Várias notas separadas por vírgula</div>
+              <div class="sugestoes" id="sugestoesNF"></div>
+            </div>
+
+            <div>
+              <label for="horaChegada">Hora da chegada</label>
+              <div class="hora-linha">
+                <input type="time" id="horaChegada">
+                <button type="button" class="btn btn-secondary btn-sm" data-agora="horaChegada" title="Agora"><i class="fas fa-clock"></i></button>
+              </div>
+            </div>
+
+            <div>
+              <label>Situação das notas <span class="obrig">*</span></label>
+              <div class="escolha">
+                <label class="ok"><input type="radio" name="problema" value="nao" checked><i class="fas fa-check-circle"></i> Tudo OK</label>
+                <label class="nok"><input type="radio" name="problema" value="sim"><i class="fas fa-exclamation-circle"></i> Tem problema</label>
+              </div>
+            </div>
+
+            <div class="campo-largo oculto" id="campoObservacoes">
+              <label for="observacoes">Qual o problema? <span class="obrig">*</span></label>
+              <select id="observacoes" multiple data-placeholder="Selecione o(s) problema(s)"></select>
+            </div>
+
+            <div id="campoCarga">
+              <label for="carga">Número da carga</label>
+              <input type="text" id="carga" placeholder="Pode ser incluído depois">
+            </div>
+          </div>
+
+          <div class="aviso" id="avisoAgenda"></div>
+
+          <div class="acoes">
+            <button type="submit" class="btn btn-primary" id="btnChegada"><i class="fas fa-save"></i> Registrar chegada</button>
+            <button type="button" class="btn btn-secondary" id="btnLimparChegada"><i class="fas fa-eraser"></i> Limpar</button>
+          </div>
+          <div class="status" id="statusChegada"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===== 3. INÍCIO ===== -->
+    <section class="painel" id="painel-inicio">
+      <div class="card">
+        <h2><i class="fas fa-play-circle"></i> Início da conferência</h2>
+        <form id="formInicio" autocomplete="off">
+          <div class="grid">
+            <div class="campo-largo">
+              <label for="recInicio">Recebimento <span class="obrig">*</span></label>
+              <select id="recInicio" data-busca data-placeholder="Selecione o recebimento aguardando início"></select>
+            </div>
+            <div>
+              <label for="horaInicio">Hora de início <span class="obrig">*</span></label>
+              <div class="hora-linha">
+                <input type="time" id="horaInicio">
+                <button type="button" class="btn btn-secondary btn-sm" data-agora="horaInicio" title="Agora"><i class="fas fa-clock"></i></button>
+              </div>
+            </div>
+            <div>
+              <label for="conferente">Conferente <span class="obrig">*</span></label>
+              <select id="conferente" data-busca data-placeholder="Selecione o conferente"></select>
+            </div>
+          </div>
+          <div class="acoes">
+            <button type="submit" class="btn btn-primary" id="btnInicio"><i class="fas fa-play"></i> Registrar início</button>
+          </div>
+          <div class="status" id="statusInicio"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===== 4. FIM ===== -->
+    <section class="painel" id="painel-fim">
+      <div class="card">
+        <h2><i class="fas fa-flag-checkered"></i> Fim da conferência</h2>
+        <form id="formFim" autocomplete="off">
+          <div class="grid">
+            <div class="campo-largo">
+              <label for="recFim">Recebimento <span class="obrig">*</span></label>
+              <select id="recFim" data-busca data-placeholder="Selecione o recebimento em conferência"></select>
+            </div>
+            <div>
+              <label for="horaFim">Hora fim <span class="obrig">*</span></label>
+              <div class="hora-linha">
+                <input type="time" id="horaFim">
+                <button type="button" class="btn btn-secondary btn-sm" data-agora="horaFim" title="Agora"><i class="fas fa-clock"></i></button>
+              </div>
+            </div>
+            <div>
+              <label>Terminou com divergência? <span class="obrig">*</span></label>
+              <div class="escolha">
+                <label class="ok"><input type="radio" name="divergencia" value="nao" checked><i class="fas fa-check-circle"></i> Não</label>
+                <label class="nok"><input type="radio" name="divergencia" value="sim"><i class="fas fa-exclamation-triangle"></i> Sim</label>
+              </div>
+            </div>
+            <div class="campo-largo oculto" id="campoDivergencia">
+              <label for="qualDivergencia">Qual divergência? <span class="obrig">*</span></label>
+              <select id="qualDivergencia" multiple data-placeholder="Selecione a(s) divergência(s)"></select>
+            </div>
+          </div>
+          <div class="acoes">
+            <button type="submit" class="btn btn-primary" id="btnFim"><i class="fas fa-flag-checkered"></i> Finalizar recebimento</button>
+          </div>
+          <div class="status" id="statusFim"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===== CONSOLIDADO ===== -->
+    <div class="card" id="cardConsolidado">
       <div class="toolbar">
-        <h2><i class="fas fa-list"></i> Recebimentos</h2>
+        <h2><i class="fas fa-clipboard-list"></i> Recebimentos</h2>
         <div class="filtros-linha">
-          <input type="date" id="filtroData" onchange="carregarRecebimentos()">
-          <button class="btn btn-secondary btn-sm" onclick="carregarRecebimentos()"><i class="fas fa-sync"></i></button>
+          <select id="filtroEtapa" style="width:auto; min-width:180px">
+            <option value="">Todas as etapas</option>
+            <option>Aguardando início</option>
+            <option>Em conferência</option>
+            <option>Finalizado</option>
+          </select>
+          <input type="date" id="filtroData">
+          <button class="btn btn-secondary btn-sm" id="btnRecarregar" title="Atualizar"><i class="fas fa-sync"></i></button>
         </div>
       </div>
       <div class="resumo" id="resumo"></div>
@@ -118,38 +277,42 @@
         <table>
           <thead>
             <tr>
-              <th>Status</th><th>Nota Fiscal</th><th>Fornecedor</th><th>Início</th><th>Fim</th>
-              <th>Conferente</th><th>Observação</th><th>Usuário</th><th>Registrado em</th>
+              <th>Etapa</th><th>Fornecedor</th><th>Notas</th><th>Agenda</th><th>Chegada</th>
+              <th>Problema</th><th>Carga</th><th>Início</th><th>Conferente</th><th>Fim</th><th>Divergência</th><th></th>
             </tr>
           </thead>
-          <tbody id="tbody"><tr><td class="vazio" colspan="9">Carregando...</td></tr></tbody>
+          <tbody id="tbody"><tr><td class="vazio" colspan="12">Carregando...</td></tr></tbody>
         </table>
       </div>
     </div>
   </div>
 
+  <script src="/js/ui.js"></script>
   <script>
     const API_URL = '/api/recebimento';
     const usuario = sessionStorage.getItem('usuario') || '';
+    const $ = id => document.getElementById(id);
 
-    let fornecedores = [];
-    let conferentes = [];
+    let opcoes = { fornecedores: [], observacoes: [], divergencias: [], conferentes: [], agendaDia: [] };
+    let recebimentos = [];
 
+    // ===== Utilitários =====
     function esc(v) {
       return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
 
-    function showStatus(msg, tipo = 'info') {
-      const el = document.getElementById('status');
-      el.innerHTML = msg;
-      el.className = `status show ${tipo}`;
+    function showStatus(id, msg, tipo = 'info') {
+      $(id).innerHTML = msg;
+      $(id).className = `status show ${tipo}`;
     }
+
+    function limparStatus(id) { $(id).className = 'status'; }
 
     async function api(body) {
       const resp = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, usuario }),
       });
       const json = await resp.json().catch(() => ({ ok: false, msg: `HTTP ${resp.status}` }));
       if (!resp.ok && json.ok !== false) json.ok = false;
@@ -164,169 +327,467 @@
       return new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Manaus', hour: '2-digit', minute: '2-digit' });
     }
 
-    function agora(id) {
-      document.getElementById(id).value = horaAtual();
-    }
-
     function hojeISO() {
       const [d, m, a] = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Manaus' }).split('/');
       return `${a}-${m}-${d}`;
     }
 
+    // itens: strings ou { valor, texto, extra }; grupos: [{ rotulo, itens }]
+    function preencherSelect(select, itens, { vazio = true, grupos = null } = {}) {
+      const opcao = i => typeof i === 'string'
+        ? `<option value="${esc(i)}">${esc(i)}</option>`
+        : `<option value="${esc(i.valor)}"${i.extra ? ` data-extra="${esc(i.extra)}"` : ''}>${esc(i.texto)}</option>`;
+
+      let html = vazio ? '<option value=""></option>' : '';
+      if (grupos) {
+        grupos.filter(g => g.itens.length).forEach(g => {
+          html += `<optgroup label="${esc(g.rotulo)}">${g.itens.map(opcao).join('')}</optgroup>`;
+        });
+      } else {
+        html += itens.map(opcao).join('');
+      }
+      select.innerHTML = html;
+    }
+
+    function valoresSelecionados(select) {
+      return [...select.selectedOptions].map(o => o.value).filter(Boolean);
+    }
+
+    function desmarcar(select) {
+      [...select.options].forEach(o => { o.selected = false; });
+      UI.atualizar(select);
+    }
+
+    document.querySelectorAll('[data-agora]').forEach(b =>
+      b.addEventListener('click', () => { $(b.dataset.agora).value = horaAtual(); }));
+
+    // ===== Etapas =====
+    function mostrarEtapa(etapa) {
+      if (!['agenda', 'chegada', 'inicio', 'fim'].includes(etapa)) etapa = 'chegada';
+      document.querySelectorAll('.etapa').forEach(b => b.classList.toggle('ativa', b.dataset.etapa === etapa));
+      document.querySelectorAll('.painel').forEach(p => p.classList.toggle('ativo', p.id === 'painel-' + etapa));
+      $('cardConsolidado').classList.toggle('oculto', etapa === 'agenda');
+      if (location.hash !== '#' + etapa) history.replaceState(null, '', '#' + etapa);
+      if (etapa === 'agenda') carregarAgenda();
+      if (etapa === 'inicio' && !$('horaInicio').value) $('horaInicio').value = horaAtual();
+      if (etapa === 'fim' && !$('horaFim').value) $('horaFim').value = horaAtual();
+    }
+
+    document.querySelectorAll('.etapa').forEach(b => b.addEventListener('click', () => mostrarEtapa(b.dataset.etapa)));
+
+    // ===== 1. AGENDA =====
+    let tabelaAgenda = { headers: [], linhas: [] };
+    let arquivoLido = null;
+
+    function renderAgenda() {
+      const filtro = $('buscaAgenda').value.trim().toLowerCase();
+      const linhas = filtro
+        ? tabelaAgenda.linhas.filter(l => l.some(c => String(c).toLowerCase().includes(filtro)))
+        : tabelaAgenda.linhas;
+
+      $('theadAgenda').innerHTML = tabelaAgenda.headers.length
+        ? '<tr>' + tabelaAgenda.headers.map(h => `<th>${esc(h)}</th>`).join('') + '</tr>' : '';
+      $('tbodyAgenda').innerHTML = linhas.length
+        ? linhas.slice(0, 1000).map(l => '<tr>' + tabelaAgenda.headers.map((_, i) => `<td>${esc(l[i])}</td>`).join('') + '</tr>').join('')
+        : `<tr><td class="vazio" colspan="${tabelaAgenda.headers.length || 1}">Nenhum registro</td></tr>`;
+      $('contadorAgenda').textContent = `${linhas.length} de ${tabelaAgenda.linhas.length} linha(s)`;
+    }
+
+    async function carregarAgenda() {
+      if (arquivoLido) return;
+      $('tituloAgenda').innerHTML = '<i class="fas fa-list"></i> Agenda';
+      try {
+        const r = await api({ action: 'obterAgenda' });
+        if (!r.ok) throw new Error(r.msg);
+        tabelaAgenda = { headers: r.headers, linhas: r.linhas.slice().reverse() }; // mais recentes primeiro
+      } catch (e) {
+        tabelaAgenda = { headers: [], linhas: [] };
+        showStatus('statusAgenda', `<i class="fas fa-exclamation-triangle"></i> Erro ao carregar agenda: ${esc(e.message)}`, 'error');
+      }
+      renderAgenda();
+    }
+
+    // Converte o arquivo Excel em { headers, linhas }
+    function lerArquivo(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Falha ao ler o arquivo'));
+        reader.onload = e => {
+          try {
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const matriz = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '', dateNF: 'dd/mm/yyyy hh:mm' });
+            // Cabeçalho = primeira linha com pelo menos 2 células preenchidas
+            const idxHeader = matriz.findIndex(l => l.filter(c => String(c).trim()).length >= 2);
+            if (idxHeader === -1) throw new Error('Não foi encontrado cabeçalho no arquivo');
+            const headers = matriz[idxHeader].map(h => String(h).trim());
+            while (headers.length && !headers[headers.length - 1]) headers.pop();
+            const linhas = matriz.slice(idxHeader + 1)
+              .map(l => headers.map((_, i) => String(l[i] ?? '').trim()))
+              .filter(l => l.some(Boolean));
+            resolve({ headers, linhas });
+          } catch (err) { reject(err); }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    async function selecionarArquivo(file) {
+      if (!file) return;
+      $('nomeArquivo').textContent = file.name;
+      showStatus('statusAgenda', '<i class="fas fa-spinner fa-spin"></i> Lendo arquivo...', 'info');
+      try {
+        arquivoLido = await lerArquivo(file);
+        if (!arquivoLido.linhas.length) throw new Error('Arquivo sem linhas de dados');
+        tabelaAgenda = arquivoLido;
+        $('tituloAgenda').innerHTML = '<i class="fas fa-eye"></i> Pré-visualização';
+        renderAgenda();
+        $('btnImportar').disabled = false;
+        $('btnCancelarArquivo').disabled = false;
+        showStatus('statusAgenda', `<i class="fas fa-check"></i> ${arquivoLido.linhas.length} linha(s) lidas. Confira e clique em <strong>Enviar para Agenda</strong>.`, 'info');
+      } catch (e) {
+        arquivoLido = null;
+        showStatus('statusAgenda', `<i class="fas fa-exclamation-triangle"></i> ${esc(e.message)}`, 'error');
+      }
+    }
+
+    function cancelarArquivo() {
+      arquivoLido = null;
+      $('arquivo').value = '';
+      $('nomeArquivo').textContent = '';
+      $('btnImportar').disabled = true;
+      $('btnCancelarArquivo').disabled = true;
+      carregarAgenda();
+    }
+
+    $('btnImportar').addEventListener('click', async () => {
+      if (!arquivoLido) return;
+      const btn = $('btnImportar');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+      try {
+        const r = await api({ action: 'importarAgenda', headers: arquivoLido.headers, linhas: arquivoLido.linhas });
+        if (!r.ok) throw new Error(r.msg);
+        showStatus('statusAgenda', `<i class="fas fa-check-circle"></i> ${esc(r.msg)}`, 'success');
+        cancelarArquivo();
+        carregarOpcoes(); // atualiza a lista de agendados do dia
+      } catch (e) {
+        showStatus('statusAgenda', `<i class="fas fa-exclamation-triangle"></i> ${esc(e.message)}`, 'error');
+        btn.disabled = false;
+      } finally {
+        btn.innerHTML = '<i class="fas fa-upload"></i> Enviar para Agenda';
+      }
+    });
+
+    $('btnCancelarArquivo').addEventListener('click', () => { limparStatus('statusAgenda'); cancelarArquivo(); });
+    $('btnRecarregarAgenda').addEventListener('click', carregarAgenda);
+    $('buscaAgenda').addEventListener('input', renderAgenda);
+
+    const dropzone = $('dropzone');
+    dropzone.addEventListener('click', () => $('arquivo').click());
+    $('arquivo').addEventListener('change', e => selecionarArquivo(e.target.files[0]));
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('over'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
+    dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('over'); selecionarArquivo(e.dataTransfer.files[0]); });
+
+    // ===== Listas das abas =====
     async function carregarOpcoes() {
       try {
         const r = await api({ action: 'obterOpcoes' });
         if (!r.ok) throw new Error(r.msg);
+        opcoes = r;
 
-        fornecedores = r.fornecedores || [];
-        conferentes = (r.conferentes || []).map(c => c.nome);
-
-        document.getElementById('listaFornecedores').innerHTML =
-          fornecedores.map(f => `<option value="${esc(f)}">`).join('');
-        document.getElementById('listaConferentes').innerHTML =
-          (r.conferentes || []).map(c => `<option value="${esc(c.nome)}">${esc([c.matricula, c.funcao].filter(Boolean).join(' - '))}</option>`).join('');
-        document.getElementById('observacao').innerHTML = '<option value="">— Sem observação —</option>' +
-          (r.observacoes || []).map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
-
-        document.getElementById('btnSalvar').disabled = false;
-        if (!fornecedores.length) showStatus('<i class="fas fa-info-circle"></i> Nenhum fornecedor encontrado na aba Fornecedor.', 'info');
+        const agendados = new Set((r.agendaDia || []).map(a => a.fornecedor.toLowerCase()));
+        preencherSelect($('fornecedor'), [], {
+          grupos: [
+            { rotulo: 'Agendados para hoje', itens: (r.agendaDia || []).map(a => ({ valor: a.fornecedor, texto: a.fornecedor, extra: a.hora })) },
+            { rotulo: 'Todos os fornecedores', itens: (r.fornecedores || []).filter(f => !agendados.has(f.toLowerCase())).map(f => ({ valor: f, texto: f })) },
+          ],
+        });
+        preencherSelect($('observacoes'), r.observacoes || [], { vazio: false });
+        preencherSelect($('qualDivergencia'), r.divergencias || [], { vazio: false });
+        preencherSelect($('conferente'), (r.conferentes || []).map(c => ({ valor: c.nome, texto: c.nome, extra: c.funcao })));
       } catch (e) {
-        showStatus(`<i class="fas fa-exclamation-triangle"></i> Erro ao carregar listas: ${esc(e.message)}`, 'error');
+        showStatus('statusChegada', `<i class="fas fa-exclamation-triangle"></i> Erro ao carregar listas: ${esc(e.message)}`, 'error');
       }
     }
 
-    function renderChips() {
-      const notas = separarNotas(document.getElementById('notaFiscal').value);
-      document.getElementById('chipsNF').innerHTML = notas.map(n => `<span class="chip">NF ${esc(n)}</span>`).join('');
+    // ===== 2. CHEGADA =====
+    function problemaSelecionado() {
+      return document.querySelector('input[name="problema"]:checked').value === 'sim';
     }
 
-    // Consulta a Agenda para mostrar o status antes de salvar
-    let timerAgenda = null;
-    function agendarVerificacao() {
-      clearTimeout(timerAgenda);
-      timerAgenda = setTimeout(verificarAgenda, 400);
+    // Com problema: escolhe as observações. Tudo OK: pode informar a carga.
+    function atualizarProblema() {
+      const problema = problemaSelecionado();
+      $('campoObservacoes').classList.toggle('oculto', !problema);
+      $('campoCarga').classList.toggle('oculto', problema);
     }
 
-    async function verificarAgenda() {
-      const preview = document.getElementById('agendaPreview');
-      const fornecedor = document.getElementById('fornecedor').value.trim();
-      if (!fornecedor || !fornecedores.includes(fornecedor)) {
-        preview.className = 'agenda-preview';
+    document.querySelectorAll('input[name="problema"]').forEach(r => r.addEventListener('change', atualizarProblema));
+
+    function renderSugestoes() {
+      const fornecedor = $('fornecedor').value;
+      const ag = (opcoes.agendaDia || []).find(a => a.fornecedor === fornecedor);
+      const notasAtuais = separarNotas($('notaFiscal').value);
+
+      if (!fornecedor) {
+        $('sugestoesNF').innerHTML = '';
+        $('avisoAgenda').className = 'aviso';
         return;
       }
-      try {
-        const r = await api({
-          action: 'verificarAgenda',
-          fornecedor,
-          notaFiscal: document.getElementById('notaFiscal').value,
-        });
-        if (!r.ok) throw new Error(r.msg);
-        if (r.status === 'Agendado') {
-          const detalhes = r.agenda
-            ? Object.entries(r.agenda).filter(([, v]) => v).slice(0, 6).map(([k, v]) => `${esc(k)}: ${esc(v)}`).join(' · ')
-            : '';
-          preview.innerHTML = `<i class="fas fa-calendar-check"></i> <strong>Agendado</strong> — fornecedor localizado na Agenda` +
-            (r.notaNaAgenda ? ' (nota fiscal confere)' : '') +
-            (detalhes ? `<small>${detalhes}</small>` : '');
-          preview.className = 'agenda-preview show ok';
-        } else {
-          preview.innerHTML = '<i class="fas fa-calendar-times"></i> <strong>Sem agenda</strong> — fornecedor não localizado na Agenda';
-          preview.className = 'agenda-preview show sem';
-        }
-      } catch (e) {
-        preview.className = 'agenda-preview';
+
+      if (ag) {
+        $('sugestoesNF').innerHTML = ag.notas.length
+          ? '<span class="rot">Notas na agenda:</span>' + ag.notas.map(n => {
+              const usada = notasAtuais.includes(n);
+              return `<button type="button" class="chip-btn ${usada ? 'usada' : ''}" data-nf="${esc(n)}">${usada ? '<i class="fas fa-check"></i>' : '+'} ${esc(n)}</button>`;
+            }).join('') +
+            (ag.notas.length > 1 ? '<button type="button" class="chip-btn" data-nf="*">Adicionar todas</button>' : '')
+          : '';
+        $('avisoAgenda').innerHTML = `<i class="fas fa-calendar-check"></i> <strong>Agendado</strong> para hoje${ag.hora ? ' às ' + esc(ag.hora) : ''}`;
+        $('avisoAgenda').className = 'aviso show ok';
+      } else {
+        $('sugestoesNF').innerHTML = '';
+        $('avisoAgenda').innerHTML = '<i class="fas fa-calendar-times"></i> <strong>Sem agenda</strong> — fornecedor não está na agenda de hoje';
+        $('avisoAgenda').className = 'aviso show sem';
       }
     }
 
-    function limparForm() {
-      document.getElementById('form').reset();
-      document.getElementById('chipsNF').innerHTML = '';
-      document.getElementById('agendaPreview').className = 'agenda-preview';
-      agora('horaInicio');
-      document.getElementById('notaFiscal').focus();
+    $('sugestoesNF').addEventListener('click', e => {
+      const b = e.target.closest('[data-nf]');
+      if (!b) return;
+      const ag = (opcoes.agendaDia || []).find(a => a.fornecedor === $('fornecedor').value);
+      let notas = separarNotas($('notaFiscal').value);
+      if (b.dataset.nf === '*') notas = [...new Set([...notas, ...ag.notas])];
+      else if (notas.includes(b.dataset.nf)) notas = notas.filter(n => n !== b.dataset.nf);
+      else notas.push(b.dataset.nf);
+      $('notaFiscal').value = notas.join(', ');
+      renderSugestoes();
+    });
+
+    $('fornecedor').addEventListener('change', renderSugestoes);
+    $('notaFiscal').addEventListener('input', renderSugestoes);
+
+    function limparChegada() {
+      $('formChegada').reset();
+      $('fornecedor').value = '';
+      desmarcar($('observacoes'));
+      $('horaChegada').value = horaAtual();
+      atualizarProblema();
+      renderSugestoes();
     }
 
-    async function salvar(e) {
-      e.preventDefault();
+    $('btnLimparChegada').addEventListener('click', () => { limparStatus('statusChegada'); limparChegada(); });
 
+    $('formChegada').addEventListener('submit', async e => {
+      e.preventDefault();
+      const problema = problemaSelecionado();
       const dados = {
-        action: 'salvarRecebimento',
-        notaFiscal: document.getElementById('notaFiscal').value,
-        fornecedor: document.getElementById('fornecedor').value.trim(),
-        horaInicio: document.getElementById('horaInicio').value,
-        horaFim: document.getElementById('horaFim').value,
-        conferente: document.getElementById('conferente').value.trim(),
-        observacao: document.getElementById('observacao').value,
-        usuario,
+        action: 'registrarChegada',
+        fornecedor: $('fornecedor').value,
+        notaFiscal: $('notaFiscal').value,
+        horaChegada: $('horaChegada').value,
+        problema,
+        observacoes: problema ? valoresSelecionados($('observacoes')) : [],
+        carga: problema ? '' : $('carga').value.trim(),
       };
 
-      if (!separarNotas(dados.notaFiscal).length) return showStatus('Informe ao menos uma nota fiscal.', 'error');
-      if (!fornecedores.includes(dados.fornecedor)) return showStatus('Selecione um fornecedor da lista (aba Fornecedor).', 'error');
-      if (!conferentes.includes(dados.conferente)) return showStatus('Selecione um conferente da lista (aba Quadro).', 'error');
-      if (dados.horaFim && dados.horaFim < dados.horaInicio) return showStatus('Hora fim não pode ser menor que a hora de início.', 'error');
+      if (!dados.fornecedor) return showStatus('statusChegada', 'Selecione o fornecedor.', 'error');
+      if (!separarNotas(dados.notaFiscal).length) return showStatus('statusChegada', 'Informe ao menos uma nota fiscal.', 'error');
+      if (problema && !dados.observacoes.length) return showStatus('statusChegada', 'Selecione qual é o problema.', 'error');
 
-      const btn = document.getElementById('btnSalvar');
+      await enviar('btnChegada', 'statusChegada', dados, limparChegada);
+    });
+
+    // ===== 3. INÍCIO =====
+    $('formInicio').addEventListener('submit', async e => {
+      e.preventDefault();
+      const dados = { action: 'registrarInicio', id: $('recInicio').value, horaInicio: $('horaInicio').value, conferente: $('conferente').value };
+      if (!dados.id) return showStatus('statusInicio', 'Selecione o recebimento.', 'error');
+      if (!dados.horaInicio) return showStatus('statusInicio', 'Informe a hora de início.', 'error');
+      if (!dados.conferente) return showStatus('statusInicio', 'Selecione o conferente.', 'error');
+
+      await enviar('btnInicio', 'statusInicio', dados, () => {
+        $('conferente').value = '';
+        $('horaInicio').value = horaAtual();
+      });
+    });
+
+    // ===== 4. FIM =====
+    function divergenciaSelecionada() {
+      return document.querySelector('input[name="divergencia"]:checked').value === 'sim';
+    }
+
+    document.querySelectorAll('input[name="divergencia"]').forEach(r => r.addEventListener('change', () => {
+      $('campoDivergencia').classList.toggle('oculto', !divergenciaSelecionada());
+    }));
+
+    $('formFim').addEventListener('submit', async e => {
+      e.preventDefault();
+      const divergencia = divergenciaSelecionada();
+      const dados = {
+        action: 'registrarFim',
+        id: $('recFim').value,
+        horaFim: $('horaFim').value,
+        divergencia,
+        qualDivergencia: divergencia ? valoresSelecionados($('qualDivergencia')) : [],
+      };
+      if (!dados.id) return showStatus('statusFim', 'Selecione o recebimento.', 'error');
+      if (!dados.horaFim) return showStatus('statusFim', 'Informe a hora fim.', 'error');
+      if (divergencia && !dados.qualDivergencia.length) return showStatus('statusFim', 'Selecione qual divergência.', 'error');
+
+      await enviar('btnFim', 'statusFim', dados, () => {
+        document.querySelector('input[name="divergencia"][value="nao"]').checked = true;
+        $('campoDivergencia').classList.add('oculto');
+        desmarcar($('qualDivergencia'));
+        $('horaFim').value = horaAtual();
+      });
+    });
+
+    // Envia uma etapa e atualiza a lista
+    async function enviar(idBotao, idStatus, dados, aoConcluir) {
+      const btn = $(idBotao);
+      const html = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
       try {
         const r = await api(dados);
         if (!r.ok) throw new Error(r.msg);
-        const icone = r.status === 'Agendado' ? 'check-circle' : 'exclamation-circle';
-        showStatus(`<i class="fas fa-${icone}"></i> ${esc(r.msg)}`, r.status === 'Agendado' ? 'success' : 'info');
-        limparForm();
-        carregarRecebimentos();
+        const alerta = r.status === 'Sem agenda' || /com divergência/i.test(r.msg);
+        showStatus(idStatus, `<i class="fas fa-${alerta ? 'exclamation-circle' : 'check-circle'}"></i> ${esc(r.msg)}`, alerta ? 'info' : 'success');
+        aoConcluir();
+        await carregarRecebimentos();
       } catch (err) {
-        showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(err.message)}`, 'error');
+        showStatus(idStatus, `<i class="fas fa-exclamation-triangle"></i> ${esc(err.message)}`, 'error');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save"></i> Salvar recebimento';
+        btn.innerHTML = html;
       }
     }
 
+    // ===== CONSOLIDADO =====
+    function rotulo(r) {
+      return `${r['Fornecedor']} — NF ${r['Nota Fiscal']}`;
+    }
+
+    function preencherPendentes() {
+      const manter = { inicio: $('recInicio').value, fim: $('recFim').value };
+      const aguardando = recebimentos.filter(r => r['Etapa'] === 'Aguardando início');
+      const conferencia = recebimentos.filter(r => r['Etapa'] === 'Em conferência');
+
+      preencherSelect($('recInicio'), aguardando.map(r => ({ valor: r['ID'], texto: rotulo(r), extra: `chegou ${r['Hora Chegada']}` })));
+      preencherSelect($('recFim'), conferencia.map(r => ({ valor: r['ID'], texto: rotulo(r), extra: `${r['Conferente']} · ${r['Hora Início']}` })));
+      if (aguardando.some(r => r['ID'] === manter.inicio)) $('recInicio').value = manter.inicio;
+      if (conferencia.some(r => r['ID'] === manter.fim)) $('recFim').value = manter.fim;
+
+      $('qtdInicio').textContent = aguardando.length || '';
+      $('qtdFim').textContent = conferencia.length || '';
+    }
+
+    function classeEtapa(etapa) {
+      return { 'Aguardando início': 'aguardando', 'Em conferência': 'conferencia', 'Finalizado': 'finalizado' }[etapa] || 'aguardando';
+    }
+
+    function renderRecebimentos() {
+      const etapa = $('filtroEtapa').value;
+      const dados = etapa ? recebimentos.filter(r => r['Etapa'] === etapa) : recebimentos;
+      const cont = e => recebimentos.filter(r => r['Etapa'] === e).length;
+
+      $('resumo').innerHTML =
+        `<span><strong>${recebimentos.length}</strong> recebimento(s)</span>` +
+        `<span class="badge-sem"><strong>${cont('Aguardando início')}</strong> aguardando início</span>` +
+        `<span class="badge-primary"><strong>${cont('Em conferência')}</strong> em conferência</span>` +
+        `<span class="badge-ok"><strong>${cont('Finalizado')}</strong> finalizado(s)</span>` +
+        `<span><strong>${recebimentos.filter(r => r['Status Agenda'] === 'Sem agenda').length}</strong> sem agenda</span>`;
+
+      $('tbody').innerHTML = dados.length ? dados.map(r => {
+        const id = esc(r['ID']);
+        const acao = r['Etapa'] === 'Aguardando início'
+          ? `<button class="btn btn-secondary btn-sm" data-ir="inicio" data-id="${id}"><i class="fas fa-play"></i> Iniciar</button>`
+          : r['Etapa'] === 'Em conferência'
+            ? `<button class="btn btn-secondary btn-sm" data-ir="fim" data-id="${id}"><i class="fas fa-flag-checkered"></i> Finalizar</button>`
+            : '';
+        return `<tr>
+          <td><span class="badge badge-etapa-${classeEtapa(r['Etapa'])}">${esc(r['Etapa'])}</span></td>
+          <td class="quebra">${esc(r['Fornecedor'])}</td>
+          <td class="quebra">${esc(r['Nota Fiscal'])}</td>
+          <td><span class="badge ${r['Status Agenda'] === 'Agendado' ? 'badge-ok' : 'badge-sem'}">${esc(r['Status Agenda'])}</span></td>
+          <td>${esc(r['Hora Chegada'])}</td>
+          <td class="quebra">${r['Problema'] === 'Sim' ? `<span class="badge badge-sem">Sim</span> ${esc(r['Observação'])}` : '<span class="contador">Não</span>'}</td>
+          <td><div class="carga-cel" data-carga="${id}">${esc(r['Carga']) || '<span class="contador">—</span>'}
+            <button class="link-btn" data-editar-carga="${id}" title="Incluir/alterar carga"><i class="fas fa-pen"></i></button></div></td>
+          <td>${esc(r['Hora Início'])}</td>
+          <td>${esc(r['Conferente'])}</td>
+          <td>${esc(r['Hora Fim'])}</td>
+          <td class="quebra">${r['Divergência'] === 'Sim' ? `<span class="badge badge-danger">Sim</span> ${esc(r['Qual Divergência'])}` : r['Divergência'] === 'Não' ? '<span class="contador">Não</span>' : ''}</td>
+          <td>${acao}</td>
+        </tr>`;
+      }).join('') : '<tr><td class="vazio" colspan="12">Nenhum recebimento</td></tr>';
+    }
+
+    $('tbody').addEventListener('click', async e => {
+      // Atalho para a etapa do recebimento
+      const ir = e.target.closest('[data-ir]');
+      if (ir) {
+        mostrarEtapa(ir.dataset.ir);
+        $(ir.dataset.ir === 'inicio' ? 'recInicio' : 'recFim').value = ir.dataset.id;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // Edição do número da carga direto na tabela
+      const editar = e.target.closest('[data-editar-carga]');
+      if (editar) {
+        const id = editar.dataset.editarCarga;
+        const r = recebimentos.find(x => x['ID'] === id);
+        const cel = document.querySelector(`[data-carga="${CSS.escape(id)}"]`);
+        cel.innerHTML = `<input type="text" value="${esc(r['Carga'])}" placeholder="Nº carga">
+          <button class="link-btn" data-salvar-carga="${esc(id)}" title="Salvar"><i class="fas fa-check"></i></button>`;
+        const input = cel.querySelector('input');
+        input.focus();
+        input.addEventListener('keydown', ev => {
+          if (ev.key === 'Enter') cel.querySelector('[data-salvar-carga]').click();
+          if (ev.key === 'Escape') renderRecebimentos();
+        });
+        return;
+      }
+
+      const salvar = e.target.closest('[data-salvar-carga]');
+      if (salvar) {
+        const id = salvar.dataset.salvarCarga;
+        const carga = document.querySelector(`[data-carga="${CSS.escape(id)}"] input`).value.trim();
+        salvar.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        const r = await api({ action: 'atualizarCarga', id, carga });
+        if (!r.ok) alert(r.msg);
+        await carregarRecebimentos();
+      }
+    });
+
     async function carregarRecebimentos() {
-      const tbody = document.getElementById('tbody');
-      tbody.innerHTML = '<tr><td class="vazio" colspan="9">Carregando...</td></tr>';
-
-      const iso = document.getElementById('filtroData').value;
+      const iso = $('filtroData').value;
       const data = iso ? iso.split('-').reverse().join('/') : 'todas';
-
       try {
         const r = await api({ action: 'obterRecebimentos', filtros: { data } });
         if (!r.ok) throw new Error(r.msg);
-
-        const dados = r.dados || [];
-        const agendados = dados.filter(d => d['Status'] === 'Agendado').length;
-        document.getElementById('resumo').innerHTML =
-          `<span><strong>${dados.length}</strong> recebimento(s)</span>` +
-          `<span class="badge-ok"><strong>${agendados}</strong> agendado(s)</span>` +
-          `<span class="badge-sem"><strong>${dados.length - agendados}</strong> sem agenda</span>`;
-
-        tbody.innerHTML = dados.length
-          ? dados.map(d => `
-              <tr>
-                <td><span class="badge ${d['Status'] === 'Agendado' ? 'badge-ok' : 'badge-sem'}">${esc(d['Status'])}</span></td>
-                <td>${esc(d['Nota Fiscal'])}</td>
-                <td>${esc(d['Fornecedor'])}</td>
-                <td>${esc(d['Hora Início'])}</td>
-                <td>${esc(d['Hora Fim'])}</td>
-                <td>${esc(d['Conferente'])}</td>
-                <td>${esc(d['Observação'])}</td>
-                <td>${esc(d['Usuário'])}</td>
-                <td>${esc(d['Registrado em'])}</td>
-              </tr>`).join('')
-          : '<tr><td class="vazio" colspan="9">Nenhum recebimento registrado</td></tr>';
+        recebimentos = r.dados || [];
+        preencherPendentes();
+        renderRecebimentos();
       } catch (e) {
-        tbody.innerHTML = `<tr><td class="vazio" colspan="9">Erro: ${esc(e.message)}</td></tr>`;
+        $('tbody').innerHTML = `<tr><td class="vazio" colspan="12">Erro: ${esc(e.message)}</td></tr>`;
       }
     }
 
-    document.getElementById('form').addEventListener('submit', salvar);
-    document.getElementById('notaFiscal').addEventListener('input', () => { renderChips(); agendarVerificacao(); });
-    document.getElementById('fornecedor').addEventListener('input', agendarVerificacao);
+    $('filtroEtapa').addEventListener('change', renderRecebimentos);
+    $('filtroData').addEventListener('change', carregarRecebimentos);
+    $('btnRecarregar').addEventListener('click', carregarRecebimentos);
 
-    document.getElementById('userName').textContent = usuario || '-';
-    document.getElementById('filtroData').value = hojeISO();
-    agora('horaInicio');
+    // ===== Início da tela =====
+    $('userName').textContent = usuario || '-';
+    $('filtroData').value = hojeISO();
+    $('horaChegada').value = horaAtual();
+    atualizarProblema();
+    mostrarEtapa(location.hash.slice(1));
     carregarOpcoes();
     carregarRecebimentos();
   </script>
