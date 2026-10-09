@@ -4,153 +4,50 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Auditoria de Avaria</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="/css/tema.css" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
 
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .header {
-      background: linear-gradient(135deg, #5b6fc7 0%, #8b5fc7 100%);
-      color: white;
-      padding: 20px 30px;
-      border-radius: 8px 8px 0 0;
-    }
-
-    .header h1 {
-      font-size: 24px;
-      margin-bottom: 5px;
-    }
-
-    .user-info {
-      font-size: 14px;
-      opacity: 0.9;
-    }
-
+    .container { max-width: 900px; }
+    .container > .header { margin-bottom: 20px; }
+    .user-info { font-size: 14px; color: var(--muted); margin-top: 4px; }
     .content {
-      padding: 30px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: clamp(16px, 3vw, 28px);
     }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 8px;
-      color: #333;
-    }
-
-    input[type="text"],
-    textarea {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
-      font-family: Arial, sans-serif;
-    }
-
-    input[type="text"]:focus,
-    textarea:focus {
-      outline: none;
-      border-color: #5b6fc7;
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
-
-    .error-message {
-      background: #fee;
-      color: #c33;
-      padding: 12px;
-      border-radius: 4px;
-      margin-top: 10px;
-      display: none;
-      border-left: 4px solid #c33;
-    }
-
-    .error-message.show {
-      display: block;
-    }
-    
-    .success-message {
-      background: #d4edda;
-      color: #155724;
-      padding: 12px;
-      border-radius: 4px;
-      margin-top: 10px;
-      display: none;
-      border-left: 4px solid #28a745;
-    }
-    
-    .success-message.show {
-      display: block;
-    }
-
-    .debug-section {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid #ddd;
-    }
-
+    .form-group { margin-bottom: 18px; }
+    textarea { min-height: 80px; resize: vertical; }
+    .error-message, .success-message { padding: 11px 14px; border-radius: var(--radius-sm); margin-top: 10px; display: none; font-size: 14px; }
+    .error-message { background: var(--red-soft); color: var(--red); }
+    .success-message { background: var(--green-soft); color: var(--green); }
+    .error-message.show, .success-message.show { display: block; }
+    .debug-section { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--border); }
     .debug-log {
-      background: #2d2d2d;
-      color: #f5f5f5;
-      padding: 15px;
-      border-radius: 4px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 14px;
+      border-radius: var(--radius-sm);
       max-height: 300px;
       overflow-y: auto;
-      font-family: 'Courier New', monospace;
+      font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
       font-size: 12px;
       line-height: 1.6;
     }
-
-    .debug-log .time {
-      color: #888;
-    }
-
-    .debug-log .error {
-      color: #ff6b6b;
-    }
-
-    .debug-log .success {
-      color: #51cf66;
-    }
-
-    .debug-log .info {
-      color: #74c0fc;
-    }
-
-    .loading {
-      color: #666;
-      font-style: italic;
-    }
+    .debug-log .time { color: var(--muted); }
+    .debug-log .error { color: var(--red); }
+    .debug-log .success { color: var(--green); }
+    .debug-log .info { color: var(--blue); }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>Auditoria de Avaria</h1>
-      <div class="user-info">Usuário: kenerson.cruz</div>
+      <h1><i class="fas fa-box-open"></i> Auditoria de Avaria</h1>
+      <div class="user-info">Usuário: <span id="usuarioAvaria">-</span></div>
     </div>
 
     <div class="content">
@@ -387,6 +284,7 @@ function clearProduct() {
 }
 
 // Inicializar
+document.getElementById('usuarioAvaria').textContent = sessionStorage.getItem('usuario') || '-';
 log('Sistema iniciado', 'success');
 carregarDados();
   </script>

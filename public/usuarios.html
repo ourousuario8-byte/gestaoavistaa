@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuários e Permissões</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="/css/tema.css" rel="stylesheet">
+  <style>
+    .layout { display: grid; grid-template-columns: minmax(320px, 1fr) 1.4fr; gap: 20px; align-items: start; }
+    .layout .card { margin-bottom: 0; }
+
+    .card h2.entre { justify-content: space-between; }
+
+    .campo { margin-bottom: 18px; }
+
+    .areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+
+    .area-opcao {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      margin: 0;
+      background: var(--surface);
+      transition: .15s;
+    }
+
+    .area-opcao:hover { border-color: var(--border-forte); }
+    .area-opcao.marcada { background: var(--primary-soft); border-color: transparent; color: var(--primary-text); }
+
+    .nova-area { display: flex; gap: 8px; margin-top: 10px; }
+
+    .busca { margin-bottom: 14px; }
+
+    .usuario {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      transition: .15s;
+    }
+
+    .usuario:hover { border-color: var(--border-forte); }
+    .usuario.editando { border-color: var(--primary); background: var(--primary-soft); }
+    .usuario strong { font-size: 15px; font-weight: 600; }
+    .usuario .botoes { display: flex; gap: 6px; flex-shrink: 0; }
+
+    .bloqueio { text-align: center; padding: 60px 20px; }
+    .bloqueio > i { font-size: 40px; color: var(--red); margin-bottom: 12px; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1><i class="fas fa-user-shield"></i> Usuários e Permissões</h1>
+        <p>Cadastre usuários e escolha quais painéis cada um acessa. Logado como: <span id="userName">-</span></p>
+      </div>
+      <div class="nav">
+        <a href="/menu"><i class="fas fa-arrow-left"></i> Menu</a>
+      </div>
+    </div>
+
+    <div id="conteudo" class="layout">
+      <div class="card">
+        <h2 id="tituloForm"><span><i class="fas fa-user-plus"></i> Novo usuário</span></h2>
+        <form id="form" autocomplete="off">
+          <div class="campo">
+            <label for="usuario">Usuário</label>
+            <input type="text" id="usuario" placeholder="ex.: joao.silva" required>
+          </div>
+
+          <div class="campo">
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" placeholder="Senha de acesso" autocomplete="new-password">
+            <div class="dica" id="dicaSenha">Obrigatória para novo usuário</div>
+          </div>
+
+          <div class="campo">
+            <label>Painéis com acesso</label>
+            <div class="areas" id="areas"></div>
+            <div class="nova-area">
+              <input type="text" id="novaArea" placeholder="Outra área (ex.: WMS TA)">
+              <button type="button" class="btn btn-secondary" onclick="adicionarArea()"><i class="fas fa-plus"></i></button>
+            </div>
+            <div class="dica">Áreas que não são painéis específicos abrem o Painel de Presença com o nome da área.</div>
+          </div>
+
+          <div class="acoes">
+            <button type="submit" class="btn btn-primary" id="btnSalvar"><i class="fas fa-save"></i> Salvar</button>
+            <button type="button" class="btn btn-secondary" onclick="novoUsuario()"><i class="fas fa-eraser"></i> Limpar</button>
+          </div>
+          <div class="status" id="status"></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2 class="entre">
+          <span><i class="fas fa-users"></i> Usuários <small id="total" class="contador"></small></span>
+          <button class="btn btn-secondary btn-sm" onclick="carregar()"><i class="fas fa-sync"></i></button>
+        </h2>
+        <input type="text" class="busca" id="busca" placeholder="Buscar usuário ou painel..." oninput="renderLista()">
+        <div id="lista"><div class="vazio">Carregando...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api/usuarios';
+    const token = sessionStorage.getItem('token') || '';
+    const usuarioLogado = sessionStorage.getItem('usuario') || '';
+
+    let usuarios = [];
+    let areas = [];
+    let areaAdmin = 'Usuários';
+    let editando = null; // usuário em edição (null = novo)
+
+    function esc(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function showStatus(msg, tipo) {
+      const el = document.getElementById('status');
+      el.innerHTML = msg;
+      el.className = `status show ${tipo}`;
+    }
+
+    async function api(body) {
+      const resp = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, token }),
+      });
+      const json = await resp.json().catch(() => ({ ok: false, msg: `HTTP ${resp.status}` }));
+      json.httpStatus = resp.status;
+      return json;
+    }
+
+    function bloquear(msg) {
+      document.getElementById('conteudo').outerHTML = `
+        <div class="card bloqueio">
+          <i class="fas fa-lock"></i>
+          <h2 style="justify-content:center; margin-bottom:0">${esc(msg)}</h2>
+          <p style="margin-top:12px"><a href="/" class="btn btn-primary" style="text-decoration:none; margin-top:8px">Ir para o login</a></p>
+        </div>`;
+    }
+
+    function renderAreas(marcadas = []) {
+      document.getElementById('areas').innerHTML = areas.map(a => {
+        const marcada = marcadas.includes(a);
+        return `<label class="area-opcao ${marcada ? 'marcada' : ''}">
+          <input type="checkbox" value="${esc(a)}" ${marcada ? 'checked' : ''} onchange="this.parentElement.classList.toggle('marcada', this.checked)">
+          ${a === areaAdmin ? '<i class="fas fa-user-shield" style="color:var(--peach)"></i>' : ''} ${esc(a)}
+        </label>`;
+      }).join('');
+    }
+
+    function areasMarcadas() {
+      return [...document.querySelectorAll('#areas input:checked')].map(i => i.value);
+    }
+
+    function adicionarArea() {
+      const input = document.getElementById('novaArea');
+      const nome = input.value.trim();
+      if (!nome) return;
+      const marcadas = areasMarcadas();
+      const existente = areas.find(a => a.toLowerCase() === nome.toLowerCase());
+      if (!existente) areas.push(nome);
+      marcadas.push(existente || nome);
+      renderAreas(marcadas);
+      input.value = '';
+    }
+
+    function renderLista() {
+      const filtro = document.getElementById('busca').value.trim().toLowerCase();
+      const lista = filtro
+        ? usuarios.filter(u => u.usuario.toLowerCase().includes(filtro) || u.abas.some(a => a.toLowerCase().includes(filtro)))
+        : usuarios;
+
+      document.getElementById('total').textContent = `(${usuarios.length})`;
+      document.getElementById('lista').innerHTML = lista.length
+        ? lista.map(u => `
+            <div class="usuario ${editando === u.usuario ? 'editando' : ''}">
+              <div>
+                <strong><i class="fas fa-user-circle" style="color:var(--primary)"></i> ${esc(u.usuario)}</strong>
+                ${u.usuario === usuarioLogado ? '<small class="contador">(você)</small>' : ''}
+                <div class="chips">${u.abas.map(a => `<span class="chip ${a === areaAdmin ? 'admin' : ''}">${esc(a)}</span>`).join('')}</div>
+              </div>
+              <div class="botoes">
+                <button class="btn btn-secondary btn-sm" data-u="${esc(u.usuario)}" onclick="editar(this.dataset.u)" title="Editar"><i class="fas fa-pen"></i></button>
+                ${u.usuario === usuarioLogado ? '' : `<button class="btn btn-danger btn-sm" data-u="${esc(u.usuario)}" onclick="excluir(this.dataset.u)" title="Excluir"><i class="fas fa-trash"></i></button>`}
+              </div>
+            </div>`).join('')
+        : '<div class="vazio">Nenhum usuário encontrado</div>';
+    }
+
+    function novoUsuario() {
+      editando = null;
+      document.getElementById('form').reset();
+      document.getElementById('usuario').disabled = false;
+      document.getElementById('tituloForm').innerHTML = '<span><i class="fas fa-user-plus"></i> Novo usuário</span>';
+      document.getElementById('dicaSenha').textContent = 'Obrigatória para novo usuário';
+      document.getElementById('status').className = 'status';
+      renderAreas([]);
+      renderLista();
+      document.getElementById('usuario').focus();
+    }
+
+    function editar(nome) {
+      const u = usuarios.find(x => x.usuario === nome);
+      if (!u) return;
+      editando = u.usuario;
+      document.getElementById('usuario').value = u.usuario;
+      document.getElementById('usuario').disabled = true;
+      document.getElementById('senha').value = '';
+      document.getElementById('tituloForm').innerHTML = `<span><i class="fas fa-user-edit"></i> Editando ${esc(u.usuario)}</span>`;
+      document.getElementById('dicaSenha').textContent = 'Deixe em branco para manter a senha atual';
+      document.getElementById('status').className = 'status';
+      renderAreas(u.abas);
+      renderLista();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function excluir(nome) {
+      if (!confirm(`Excluir o usuário "${nome}"? Ele perde o acesso a todos os painéis.`)) return;
+      const r = await api({ action: 'excluir', usuario: nome });
+      if (!r.ok) return showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(r.msg)}`, 'error');
+      showStatus(`<i class="fas fa-check-circle"></i> ${esc(r.msg)}`, 'success');
+      if (editando === nome) novoUsuario();
+      carregar();
+    }
+
+    async function salvar(e) {
+      e.preventDefault();
+      const dados = {
+        action: 'salvar',
+        usuario: document.getElementById('usuario').value.trim(),
+        senha: document.getElementById('senha').value.trim(),
+        abas: areasMarcadas(),
+        novo: !editando,
+      };
+
+      if (!dados.usuario) return showStatus('Informe o usuário.', 'error');
+      if (!editando && !dados.senha) return showStatus('Informe a senha.', 'error');
+      if (!dados.abas.length) return showStatus('Selecione ao menos um painel.', 'error');
+
+      const btn = document.getElementById('btnSalvar');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+      try {
+        const r = await api(dados);
+        if (!r.ok) throw new Error(r.msg);
+        const salvo = dados.usuario;
+        await carregar();
+        editar(salvo);
+        showStatus(`<i class="fas fa-check-circle"></i> ${esc(r.msg)}`, 'success');
+      } catch (err) {
+        showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(err.message)}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Salvar';
+      }
+    }
+
+    async function carregar() {
+      const r = await api({ action: 'listar' });
+      if (r.httpStatus === 401 || r.httpStatus === 403) return bloquear(r.msg);
+      if (!r.ok) {
+        document.getElementById('lista').innerHTML = `<div class="vazio">Erro: ${esc(r.msg)}</div>`;
+        return;
+      }
+      usuarios = r.usuarios;
+      areaAdmin = r.areaAdmin;
+      // Mantém áreas adicionadas manualmente que ainda não foram salvas
+      areas = [...new Set([...r.areas, ...areas])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      if (!editando) renderAreas(areasMarcadas());
+      renderLista();
+    }
+
+    document.getElementById('form').addEventListener('submit', salvar);
+    document.getElementById('novaArea').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); adicionarArea(); }
+    });
+
+    document.getElementById('userName').textContent = usuarioLogado || '-';
+    if (!token) bloquear('Sessão expirada. Faça login novamente.');
+    else carregar();
+  </script>
+</body>
+</html>

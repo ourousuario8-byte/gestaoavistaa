@@ -25,13 +25,15 @@ app.use('/api/producao/resumo-base', require('./api/producao/resumo-base'));
 app.use('/api/producao/dados',       require('./api/producao/dados'));
 app.use('/api/qlp/dados',            require('./api/qlp/dados'));
 app.use('/api/qlp/quadro',           require('./api/qlp/quadro'));
+app.use('/api/recebimento',          require('./api/recebimento'));
+app.use('/api/usuarios',             require('./api/usuarios'));
 
 // Rotas de página (clean URLs)
 const pages = [
   'menu', 'ferramentas', 'painel', 'qlp', 'producao',
   'resumo-base', 'mapacarga', 'avaria', 'alocacaobox',
   'controle-coletores', 'resumo-equipamentos',
-  'Linha_distribuição'
+  'Linha_distribuição', 'recebimento', 'recebimento-agenda', 'usuarios'
 ];
 
 pages.forEach(page => {

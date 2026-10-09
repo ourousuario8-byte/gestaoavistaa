@@ -5,48 +5,71 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Distribuição de Linhas de Separação - CORRIGIDO</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="/css/tema.css" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px}
-.container{max-width:1800px;margin:0 auto}
-.header{background:white;padding:20px 30px;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,0.1);margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px}
-.header h1{color:#333;font-size:24px;display:flex;align-items:center;gap:10px}
-.btn{padding:10px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;display:inline-flex;align-items:center;gap:8px}
-.btn-primary{background:#667eea;color:white}
-.btn-success{background:#28a745;color:white}
-.btn-danger{background:#dc3545;color:white}
-.btn-warning{background:#ffc107;color:#212529}
-.btn-secondary{background:#6c757d;color:white}
-.btn:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.2)}
-.btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
-.section{background:white;padding:25px;border-radius:15px;margin-bottom:20px;box-shadow:0 5px 20px rgba(0,0,0,0.1)}
-.section h2{color:#667eea;margin-bottom:15px;display:flex;align-items:center;gap:10px}
-.paste-area{width:100%;min-height:200px;padding:15px;border:2px dashed #e0e0e0;border-radius:8px;font-family:'Courier New',monospace;font-size:11px;resize:vertical;background:#f8f9fa;margin-bottom:15px}
-.paste-area:focus{outline:none;border-color:#667eea;background:white}
-.alert{padding:15px 20px;border-radius:10px;margin-bottom:20px;display:flex;align-items:center;gap:10px}
-.alert-success{background:#d4edda;color:#155724;border-left:4px solid #28a745}
-.alert-danger{background:#f8d7da;color:#721c24;border-left:4px solid #dc3545}
-.alert-warning{background:#fff3cd;color:#856404;border-left:4px solid #ffc107}
-.alert-info{background:#d1ecf1;color:#0c5460;border-left:4px solid #17a2b8}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:20px}
-.stat-card{background:white;padding:20px;border-radius:12px;box-shadow:0 5px 20px rgba(0,0,0,0.1);text-align:center}
-.stat-card h3{font-size:12px;color:#6c757d;margin-bottom:8px;text-transform:uppercase}
-.stat-card .value{font-size:32px;font-weight:bold;color:#667eea}
-.supervisor-group{background:#f8f9fa;padding:15px;border-radius:8px;margin-bottom:15px;border-left:4px solid #667eea}
-.supervisor-group h4{color:#667eea;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.linha-card{background:white;padding:12px;border-radius:6px;margin-bottom:8px;border:1px solid #e9ecef;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;gap:10px;align-items:center}
-.linha-card:hover{background:#f0f4ff;border-color:#667eea}
-.colab-section{margin-top:10px;padding:10px;background:#fff;border-radius:4px;border:1px solid #e9ecef}
-.colab-section h5{font-size:11px;color:#666;margin-bottom:5px;text-transform:uppercase}
-.colab-list{font-size:11px;color:#666;max-height:150px;overflow-y:auto}
-.colab-item{padding:4px 0;border-bottom:1px solid #f0f0f0}
-.colab-item:last-child{border-bottom:none}
-.badge{display:inline-block;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600}
-.badge-success{background:#d4edda;color:#155724}
-.badge-warning{background:#fff3cd;color:#856404}
-.badge-primary{background:#e3f2fd;color:#1976d2}
-.loading{display:inline-block;animation:spin 1s linear infinite}
-@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+
+.container { max-width: 1800px; }
+.header h1 { margin: 0; }
+.btn-success { background: var(--green-soft); color: var(--green); }
+.btn-danger { background: var(--red-soft); color: var(--red); }
+.btn-warning { background: var(--amber-soft); color: var(--amber); }
+
+.paste-area {
+  width: 100%;
+  min-height: 200px;
+  padding: 14px;
+  border: 2px dashed var(--border-forte);
+  border-radius: var(--radius-sm);
+  font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  resize: vertical;
+  background: var(--surface-2);
+  margin-bottom: 14px;
+}
+
+.paste-area:focus { border-color: var(--primary); background: var(--surface); }
+
+.stat-card { text-align: left; }
+.stat-card .value { color: var(--primary-text); }
+
+.supervisor-group {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary-soft);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.supervisor-group h4 { color: var(--primary-text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+
+.linha-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  display: grid;
+  grid-template-columns: 2fr repeat(5, 1fr);
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.linha-card:hover { border-color: var(--border-forte); }
+
+.colab-section { margin-top: 10px; padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.colab-section h5 { font-size: 11px; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+.colab-list { font-size: 12px; color: var(--muted); max-height: 150px; overflow-y: auto; }
+.colab-item { padding: 4px 0; border-bottom: 1px solid var(--border); }
+.colab-item:last-child { border-bottom: none; }
+
+.loading { display: inline-block; animation: tema-spin 1s linear infinite; }
+
+@media (max-width: 760px) {
+  .linha-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .linha-card > :first-child { grid-column: 1 / -1; }
+}
 </style>
 </head>
 <body>
@@ -64,7 +87,7 @@ body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea
 
 <div class="section">
 <h2><i class="fas fa-paste"></i> 1. Importar Linhas de Separação</h2>
-<p style="color:#666;margin-bottom:10px;font-size:13px">Cole os dados com as colunas: <strong>Linha | Lote | Itens | Volume | Peso | Visitas</strong></p>
+<p style="color:var(--muted);margin-bottom:10px;font-size:13px">Cole os dados com as colunas: <strong>Linha | Lote | Itens | Volume | Peso | Visitas</strong></p>
 <textarea class="paste-area" id="pasteLinhas" placeholder="Exemplo:&#10;LIQUIDA 744 (CP)	L001	100	5.5	250	3&#10;LIMPEZA EXP (CP)	L002	80	4.2	180	2"></textarea>
 <button class="btn btn-primary" onclick="processarLinhas()"><i class="fas fa-upload"></i> Processar Linhas</button>
 </div>
@@ -74,7 +97,7 @@ body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea
 <div class="stats" id="statsGeral"></div>
 
 <h2 style="margin-top:30px"><i class="fas fa-users"></i> Distribuição Inteligente por Supervisor</h2>
-<p style="color:#666;margin-bottom:15px;font-size:13px">
+<p style="color:var(--muted);margin-bottom:15px;font-size:13px">
 <i class="fas fa-lightbulb"></i> <strong>Critério:</strong> Balanceamento baseado em <strong>quantidade de lotes</strong> por linha + colaboradores presentes
 </p>
 <div id="distribuicaoSupervisores"></div>
@@ -325,7 +348,7 @@ function renderResultados(dist,linhas){
     </div>
     <div class="stat-card">
       <h3>Total de Lotes</h3>
-      <div class="value" style="color:#28a745">${totalLotes}</div>
+      <div class="value" style="color:var(--green)">${totalLotes}</div>
     </div>
     <div class="stat-card">
       <h3>Total de Itens</h3>
@@ -337,11 +360,11 @@ function renderResultados(dist,linhas){
     </div>
     <div class="stat-card">
       <h3>Colaboradores</h3>
-      <div class="value" style="color:#17a2b8">${totalColabs}</div>
+      <div class="value" style="color:var(--blue)">${totalColabs}</div>
     </div>
     <div class="stat-card">
       <h3>Supervisores</h3>
-      <div class="value" style="color:#6a1b9a">${Object.keys(dist).length}</div>
+      <div class="value" style="color:var(--lilac)">${Object.keys(dist).length}</div>
     </div>
   `;
   
@@ -390,7 +413,7 @@ function renderResultados(dist,linhas){
         <div class="linha-card">
           <div>
             <strong>${linha.linha}</strong>
-            <div style="font-size:10px;color:#666;margin-top:3px">
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">
               ${linha.totalItens} itens | ${linha.totalVisitas} visitas
             </div>
           </div>
@@ -400,10 +423,10 @@ function renderResultados(dist,linhas){
           <div>
             <span class="badge badge-primary">${linha.colasSugeridos} pessoas</span>
           </div>
-          <div style="font-size:11px;color:#666">
+          <div style="font-size:11px;color:var(--muted)">
             <strong>${linha.lotesPorPessoa}</strong> lotes/pessoa
           </div>
-          <div style="font-size:11px;color:#666">
+          <div style="font-size:11px;color:var(--muted)">
             ~${linha.itensPorPessoa} itens/pessoa
           </div>
           <div>

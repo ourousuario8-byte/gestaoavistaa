@@ -5,293 +5,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ferramentas - Gestão Perlog</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/tema.css" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            color: #667eea;
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-        
-        .user-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
+
+        .header { display: grid; grid-template-columns: 1fr auto auto; }
+
+        .user-badge, .area-info {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 7px 14px;
             font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
         }
-        
-        .user-badge i {
-            margin-right: 8px;
-        }
-        
-        .area-info {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 15px;
-            display: inline-block;
-        }
-        
-        .area-info strong {
-            color: #667eea;
-        }
-        
+
+        .user-badge i { color: var(--primary); }
+        .area-info strong { color: var(--text); font-weight: 600; }
+
         .tools-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-        
-        .tool-card {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .tool-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-        
-        .tool-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
-        }
-        
-        .tool-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            color: white;
-            margin-bottom: 20px;
-            transition: transform 0.3s;
-        }
-        
-        .tool-card:hover .tool-icon {
-            transform: scale(1.1);
-        }
-        
-        .tool-card h3 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        
-        .tool-card p {
-            color: #666;
-            font-size: 15px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-        
-        .tool-features {
-            list-style: none;
-            padding: 0;
-            margin-bottom: 20px;
-        }
-        
-        .tool-features li {
-            padding: 8px 0;
-            color: #555;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .tool-features li i {
-            color: #667eea;
-            font-size: 12px;
-        }
-        
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            width: 100%;
-            justify-content: center;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        .actions-footer {
-            text-align: center;
-        }
-        
-        .btn-back {
-            background: #6c757d;
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn-back:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-        }
-        
-        .status-message {
-            background: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            animation: slideIn 0.3s ease-out;
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .status-success { border-left: 4px solid #28a745; }
-        .status-error { border-left: 4px solid #dc3545; }
-        .status-warning { border-left: 4px solid #ffc107; }
-        .status-info { border-left: 4px solid #17a2b8; }
-        
-        .badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-        
-        .badge-new {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .badge-popular {
-            background: #cce5ff;
-            color: #004085;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
-        .badge-analysis {
-            background: #f8d7da;
-            color: #721c24;
+        .tool-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 22px;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            transition: border-color .15s, transform .15s;
         }
-        
-        @media (max-width: 768px) {
-            .tools-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .header h1 {
-                font-size: 24px;
-            }
+
+        .tool-card:hover { border-color: var(--border-forte); transform: translateY(-2px); }
+
+        /* Ícones em tons pastel alternados */
+        .tool-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--primary-soft) !important;
+            color: var(--primary-text);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 14px;
         }
+
+        .tool-card:nth-child(6n+2) .tool-icon { background: var(--peach-soft) !important; color: var(--peach); }
+        .tool-card:nth-child(6n+3) .tool-icon { background: var(--green-soft) !important; color: var(--green); }
+        .tool-card:nth-child(6n+4) .tool-icon { background: var(--blue-soft) !important; color: var(--blue); }
+        .tool-card:nth-child(6n+5) .tool-icon { background: var(--amber-soft) !important; color: var(--amber); }
+        .tool-card:nth-child(6n+6) .tool-icon { background: var(--lilac-soft) !important; color: var(--lilac); }
+
+        .tool-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+        .tool-card p { font-size: 14px; color: var(--muted); margin-bottom: 14px; }
+
+        .tool-features { list-style: none; margin-bottom: 18px; flex: 1; }
+        .tool-features li { font-size: 13px; color: var(--text); padding: 3px 0; display: flex; gap: 8px; align-items: baseline; }
+        .tool-features li i { color: var(--green); font-size: 11px; }
+
+        .tool-card .btn { width: 100%; }
+
+        .badge { position: absolute; top: 18px; right: 18px; }
+        .badge-new { background: var(--green-soft); color: var(--green); }
+        .badge-popular { background: var(--primary-soft); color: var(--primary-text); }
+        .badge-analysis { background: var(--amber-soft); color: var(--amber); }
+
+        .actions-footer { display: flex; justify-content: center; }
+        .btn-back {
+            background: var(--surface);
+            border: 1px solid var(--border-forte);
+            color: var(--text);
+            border-radius: var(--radius-sm);
+            padding: 11px 22px;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .btn-back:hover { background: var(--surface-2); }
+
+        .status-message {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-size: 14px;
+        }
+        .status-success { background: var(--green-soft); color: var(--green); }
+        .status-error   { background: var(--red-soft);   color: var(--red); }
+        .status-warning { background: var(--amber-soft); color: var(--amber); }
+        .status-info    { background: var(--blue-soft);  color: var(--blue); }
 
         .loading-overlay {
-            display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 9999;
-            justify-content: center;
+            inset: 0;
+            background: rgba(247, 246, 242, .85);
+            backdrop-filter: blur(3px);
+            display: none;
             align-items: center;
+            justify-content: center;
+            z-index: 100;
         }
+        .loading-overlay.show { display: flex; }
+        .loading-content { text-align: center; color: var(--muted); }
+        .loading-content i { font-size: 34px; color: var(--primary); margin-bottom: 12px; }
 
-        .loading-overlay.show {
-            display: flex;
-        }
-
-        .loading-content {
-            background: white;
-            padding: 30px 40px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-
-        .loading-content i {
-            font-size: 48px;
-            color: #667eea;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-content p {
-            margin-top: 15px;
-            color: #333;
-            font-size: 16px;
-            font-weight: 600;
+        @media (max-width: 768px) {
+            .header { grid-template-columns: 1fr; }
+            .tools-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -332,7 +168,7 @@
             <!-- Dashboard QLP -->
             <div class="tool-card" onclick="abrirFerramenta('qlp')">
                 <span class="badge badge-popular">Dashboard</span>
-                <div class="tool-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                <div class="tool-icon">
                     <i class="fas fa-chart-bar"></i>
                 </div>
                 <h3>Dashboard QLP</h3>
@@ -349,7 +185,7 @@
             
             <!-- Calculadora de Produção -->
             <div class="tool-card" onclick="abrirFerramenta('producao')">
-                <div class="tool-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                <div class="tool-icon">
                     <i class="fas fa-calculator"></i>
                 </div>
                 <h3>Calculadora de Produção</h3>
@@ -367,7 +203,7 @@
             <!-- Resumo Base - NOVO -->
             <div class="tool-card" onclick="abrirFerramenta('resumo-base')">
                 <span class="badge badge-analysis">Análise</span>
-                <div class="tool-icon" style="background: linear-gradient(135deg, #fa709a, #fee140);">
+                <div class="tool-icon">
                     <i class="fas fa-chart-pie"></i>
                 </div>
                 <h3>Resumo Presença Colaboradores</h3>
@@ -385,7 +221,7 @@
             <!-- Resumo de Equipamentos - NOVO -->
             <div class="tool-card" onclick="abrirFerramenta('resumo-equipamentos')">
                 <span class="badge badge-new">Novo</span>
-                <div class="tool-icon" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);">
+                <div class="tool-icon">
                     <i class="fas fa-chart-pie"></i>
                 </div>
                 <h3>Resumo de Equipamentos</h3>
@@ -403,7 +239,7 @@
             <!-- Mapa de Carga -->
             <div class="tool-card" onclick="abrirFerramenta('mapacarga')">
                 <span class="badge badge-popular">Logística</span>
-                <div class="tool-icon" style="background: linear-gradient(135deg, #30cfd0, #330867);">
+                <div class="tool-icon">
                     <i class="fas fa-truck-loading"></i>
                 </div>
                 <h3>Mapa de Carga</h3>
@@ -422,7 +258,7 @@
             <!-- Alocação BOX -->
             <div class="tool-card" onclick="abrirFerramenta('alocacaobox')">
                 <span class="badge badge-new">Novo</span>
-                <div class="tool-icon" style="background: linear-gradient(135deg, #a8edea, #fed6e3);">
+                <div class="tool-icon">
                     <i class="fas fa-warehouse"></i>
                 </div>
                 <h3>Alocação BOX</h3>
@@ -441,7 +277,7 @@
             <!-- controle-coletores -->
             <div class="tool-card" onclick="abrirFerramenta('controle-coletores')">
                 <span class="badge badge-popular">Operacional</span>
-                <div class="tool-icon" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);">
+                <div class="tool-icon">
                     <i class="fas fa-barcode"></i>
                 </div>
                 <h3>Controle de equipamentos</h3>
@@ -453,6 +289,41 @@
                 </ul>
                 <button class="btn btn-primary">
                     <i class="fas fa-arrow-right"></i> Abrir controle-coletores
+                </button>
+            </div>
+            <!-- Recebimento -->
+            <div class="tool-card" onclick="abrirFerramenta('recebimento')">
+                <span class="badge badge-new">Novo</span>
+                <div class="tool-icon">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <h3>Recebimento</h3>
+                <p>Recebimento em 4 etapas, cruzado com a agenda do portal.</p>
+                <ul class="tool-features">
+                    <li><i class="fas fa-check"></i> Agenda, chegada, início e fim</li>
+                    <li><i class="fas fa-check"></i> Problemas, carga e divergências</li>
+                    <li><i class="fas fa-check"></i> Status Agendado / Sem agenda</li>
+                </ul>
+                <button class="btn btn-primary">
+                    <i class="fas fa-arrow-right"></i> Abrir Recebimento
+                </button>
+            </div>
+
+            <!-- Agenda do portal -->
+            <div class="tool-card" onclick="abrirFerramenta('recebimento-agenda')">
+                <span class="badge badge-new">Novo</span>
+                <div class="tool-icon">
+                    <i class="fas fa-file-excel"></i>
+                </div>
+                <h3>Agenda do Portal</h3>
+                <p>Importação do arquivo Excel do portal para a aba Agenda.</p>
+                <ul class="tool-features">
+                    <li><i class="fas fa-check"></i> Upload de .xlsx / .xls / .csv</li>
+                    <li><i class="fas fa-check"></i> Pré-visualização antes de enviar</li>
+                    <li><i class="fas fa-check"></i> Só adiciona linhas novas, com data do upload</li>
+                </ul>
+                <button class="btn btn-primary">
+                    <i class="fas fa-arrow-right"></i> Abrir Agenda
                 </button>
             </div>
         </div>
@@ -539,7 +410,9 @@
                 'mapacarga': '/mapacarga',
                 'alocacaobox': '/alocacaobox',
                 'resumo-equipamentos': '/resumo-equipamentos', 
-                'controle-coletores': '/controle-coletores'
+                'controle-coletores': '/controle-coletores',
+                'recebimento': '/recebimento',
+                'recebimento-agenda': '/recebimento#agenda'
             };
             
             const mensagens = {
@@ -550,7 +423,9 @@
                 'mapacarga': 'Abrindo Mapa de Carga...',
                 'alocacaobox': 'Abrindo Alocação BOX...',
                 'controle-coletores': 'Abrindo Gestão de controle de Equipamentos...',
-                'resumo-equipamentos': 'Abrindo Resumo de Equipamentos...'
+                'resumo-equipamentos': 'Abrindo Resumo de Equipamentos...',
+                'recebimento': 'Abrindo Recebimento...',
+                'recebimento-agenda': 'Abrindo Agenda do Portal...'
             };
 
             const nomesFerramenta = {
@@ -561,7 +436,9 @@
                 'mapacarga': 'Mapa de Carga',
                 'alocacaobox': 'Alocação BOX',
                 'controle-coletores': 'Controle de Equipamentos',
-                'resumo-equipamentos': 'Resumo de Equipamentos'
+                'resumo-equipamentos': 'Resumo de Equipamentos',
+                'recebimento': 'Recebimento',
+                'recebimento-agenda': 'Agenda do Portal'
             };
             
             if (!destinos[ferramenta]) {

@@ -5,431 +5,249 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resumo Base - Análise de Presença</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/tema.css" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .header h1 {
-            color: #667eea;
-            font-size: 28px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .header-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn:hover { transform: translateY(-2px); }
-        .btn-primary { background: #667eea; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-info { background: #17a2b8; color: white; }
-        .btn-warning { background: #ffc107; color: #212529; }
-        .btn-secondary { background: #6c757d; color: white; }
-        
-        .filtros {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        
+        .header-actions .btn { padding: 9px 14px; }
+
+        /* ===== Filtros ===== */
         .filtros h3 {
-            color: #333;
-            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 18px;
         }
-        
+
         .filtro-row {
             display: grid;
-            grid-template-columns: 250px 1fr 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            grid-template-columns: minmax(180px, 220px) repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 18px;
         }
-        
-        .filtro-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        
+
+        .filtro-group { display: flex; flex-direction: column; gap: 6px; }
+
         .filtro-group label {
             font-size: 13px;
-            font-weight: 600;
-            color: #495057;
             display: flex;
             align-items: center;
             gap: 8px;
+            margin: 0;
         }
-        
-        .filtro-group input, .filtro-group select {
-            padding: 10px 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-        
+
+        .filtro-group label i { color: var(--muted); }
+
         .filtro-group select[multiple] {
             min-height: 140px;
-            background: #f8f9fa;
+            background: var(--surface-2);
+            padding: 6px;
         }
-        
+
         .filtro-group select[multiple] option {
-            padding: 8px 10px;
-            border-radius: 4px;
+            padding: 7px 10px;
+            border-radius: 6px;
             margin: 2px 0;
         }
-        
+
         .filtro-group select[multiple] option:checked {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+            background: var(--primary-soft) linear-gradient(var(--primary-soft), var(--primary-soft));
+            color: var(--primary-text);
             font-weight: 600;
         }
-        
-        .filtro-group input:focus, .filtro-group select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .filtro-hint {
-            font-size: 11px;
-            color: #6c757d;
-            font-style: italic;
-            margin-top: 3px;
-        }
-        
-        .filtros-ativos {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
-            min-height: 30px;
-        }
-        
+
+        .filtro-hint { font-size: 11px; color: var(--muted); }
+
+        .filtros-ativos { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+        .filtros-ativos:empty { display: none; }
+
         .filtro-tag {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
+            background: var(--primary-soft);
+            color: var(--primary-text);
+            padding: 5px 12px;
+            border-radius: 999px;
             font-size: 12px;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            animation: fadeIn 0.3s;
         }
-        
-        .filtro-tag i {
-            cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.2s;
-        }
-        
-        .filtro-tag i:hover {
-            opacity: 1;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
+
+        .filtro-tag i { cursor: pointer; opacity: .7; }
+        .filtro-tag i:hover { opacity: 1; }
+
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        /* ===== Cartões de resumo ===== */
         .resumo-geral {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
         }
-        
+
         .card-resumo {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            text-align: center;
+            --tom: var(--primary-text);
+            --tom-soft: var(--primary-soft);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 18px 20px;
             position: relative;
             overflow: hidden;
         }
-        
+
         .card-resumo::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            inset: 0 auto 0 0;
+            width: 4px;
+            background: var(--tom-soft);
         }
-        
+
+        .card-resumo.success { --tom: var(--green); --tom-soft: #cfe8d7; }
+        .card-resumo.danger  { --tom: var(--red);   --tom-soft: #f3d0ce; }
+        .card-resumo.warning { --tom: var(--amber); --tom-soft: #f3e0b6; }
+
         .card-resumo h3 {
-            font-size: 14px;
-            color: #6c757d;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .card-resumo .valor {
-            font-size: 36px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 8px;
-        }
-        
-        .card-resumo .percentual {
-            font-size: 16px;
-            color: #28a745;
+            font-size: 12px;
             font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
         }
-        
-        .card-resumo.warning .valor { color: #ffc107; }
-        .card-resumo.danger .valor { color: #dc3545; }
-        .card-resumo.success .valor { color: #28a745; }
-        
-        .secao {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+
+        .card-resumo .valor {
+            font-size: clamp(26px, 3vw, 32px);
+            font-weight: 700;
+            color: var(--tom);
+            line-height: 1.1;
         }
-        
+
+        .card-resumo .percentual {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--green);
+            background: var(--green-soft);
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+
+        /* ===== Seções e tabelas ===== */
         .secao-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 16px;
             flex-wrap: wrap;
             gap: 10px;
         }
-        
+
         .secao-header h2 {
-            color: #667eea;
-            font-size: 22px;
+            font-size: 17px;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        
-        .badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .badge-primary { background: #e3f2fd; color: #1976d2; }
-        .badge-success { background: #d4edda; color: #155724; }
-        .badge-warning { background: #fff3cd; color: #856404; }
-        .badge-danger { background: #f8d7da; color: #721c24; }
-        
-        .tabela-container {
-            overflow-x: auto;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        th {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            font-weight: 600;
+
+        .tabela-container { max-height: none; }
+
+        td { white-space: nowrap; vertical-align: top; }
+        td:first-child, th:first-child {
             position: sticky;
-            top: 0;
-            z-index: 10;
+            left: 0;
+            background: var(--surface);
+            z-index: 1;
+            font-weight: 600;
         }
-        
-        tbody tr:hover {
-            background-color: #f8f9fa;
-        }
-        
-        tbody tr:nth-child(even) {
-            background-color: #fafafa;
-        }
-        
+        th:first-child { background: var(--surface-2); z-index: 3; }
+        tbody tr:hover td:first-child { background: #fcfbf8; }
+
         .colab-toggle {
             cursor: pointer;
-            color: #667eea;
+            color: var(--primary-text);
             font-size: 12px;
-            text-decoration: underline;
+            font-weight: 600;
             display: inline-flex;
             align-items: center;
             gap: 5px;
         }
-        
-        .colab-toggle:hover {
-            color: #5a6fd8;
-        }
-        
+
+        .colab-toggle:hover { text-decoration: underline; }
+
         .colaboradores-lista {
             display: none;
-            margin-top: 10px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 6px;
+            margin-top: 8px;
+            padding: 8px 10px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             font-size: 12px;
+            white-space: normal;
+            min-width: 220px;
         }
-        
-        .colaboradores-lista.show {
-            display: block;
-        }
-        
-        .colaborador-item {
-            padding: 6px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .colaborador-item:last-child {
-            border-bottom: none;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 80px 20px;
-            color: white;
-        }
-        
-        .loading i {
-            font-size: 64px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .status-message {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            animation: slideIn 0.3s ease-out;
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .status-success { background: #d4edda; color: #155724; }
-        .status-error { background: #f8d7da; color: #721c24; }
-        .status-info { background: #d1ecf1; color: #0c5460; }
-        
+
+        .colaboradores-lista.show { display: block; }
+        .colaborador-item { padding: 5px 0; border-bottom: 1px solid var(--border); }
+        .colaborador-item:last-child { border-bottom: none; }
+
         .barra-progresso {
-            height: 25px;
-            background: #e9ecef;
-            border-radius: 12px;
+            height: 22px;
+            min-width: 110px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 999px;
             overflow: hidden;
-            position: relative;
         }
-        
+
         .barra-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            transition: width 0.5s ease;
+            background: #cfe8d7;
+            transition: width .5s ease;
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            padding-right: 10px;
-            color: white;
+            padding-right: 8px;
+            color: var(--green);
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
         }
-        
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .header h1 {
-                font-size: 22px;
-            }
-            
-            .filtro-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .resumo-geral {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            table {
-                font-size: 12px;
-            }
-            
-            th, td {
-                padding: 8px;
-            }
+
+        /* ===== Carregamento e mensagens ===== */
+        .loading { text-align: center; padding: 80px 20px; color: var(--muted); }
+        .loading i { font-size: 40px; color: var(--primary); }
+
+        .status-message {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .status-success { background: var(--green-soft); color: var(--green); }
+        .status-error   { background: var(--red-soft);   color: var(--red); }
+        .status-info    { background: var(--blue-soft);  color: var(--blue); }
+
+        @media (max-width: 1000px) {
+            .filtro-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 640px) {
+            .header-actions { width: 100%; }
+            .header-actions .btn, .btn-group .btn { flex: 1; }
+            .filtro-row { grid-template-columns: 1fr; }
+            .filtro-group select[multiple] { min-height: 110px; }
+            .resumo-geral { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+            .card-resumo { padding: 14px 16px; }
+            table { font-size: 13px; }
         }
     </style>
 </head>
@@ -465,24 +283,21 @@
                 </div>
                 <div class="filtro-group">
                     <label><i class="fas fa-user-tie"></i> Supervisores</label>
-                    <select id="filtroSupervisor" multiple>
+                    <select id="filtroSupervisor" multiple data-placeholder="Todos os supervisores">
                         <option value="">Carregando...</option>
                     </select>
-                    <span class="filtro-hint">Segure Ctrl para selecionar múltiplos</span>
                 </div>
                 <div class="filtro-group">
                     <label><i class="fas fa-briefcase"></i> Funções</label>
-                    <select id="filtroFuncao" multiple>
+                    <select id="filtroFuncao" multiple data-placeholder="Todas as funções">
                         <option value="">Carregando...</option>
                     </select>
-                    <span class="filtro-hint">Segure Ctrl para selecionar múltiplos</span>
                 </div>
                 <div class="filtro-group">
                     <label><i class="fas fa-clock"></i> Turnos</label>
-                    <select id="filtroTurno" multiple>
+                    <select id="filtroTurno" multiple data-placeholder="Todos os turnos">
                         <option value="">Carregando...</option>
                     </select>
-                    <span class="filtro-hint">Segure Ctrl para selecionar múltiplos</span>
                 </div>
             </div>
             
@@ -662,9 +477,9 @@
             } catch (error) {
                 console.error('[RESUMO] Erro:', error);
                 document.getElementById('loadingDiv').innerHTML = `
-                    <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
-                    <p style="margin-top: 20px; color: #dc3545;">Erro ao carregar resumo</p>
-                    <p style="font-size: 14px; color: white; margin-top: 10px;">${error.message}</p>
+                    <i class="fas fa-exclamation-triangle" style="color: var(--red);"></i>
+                    <p style="margin-top: 20px; color: var(--red);">Erro ao carregar resumo</p>
+                    <p style="font-size: 14px; color: var(--muted); margin-top: 10px;">${error.message}</p>
                     <button class="btn btn-warning" onclick="carregarResumo()" style="margin-top: 20px;">
                         <i class="fas fa-sync-alt"></i> Tentar Novamente
                     </button>
@@ -942,13 +757,13 @@
                 tr.innerHTML = `
                     <td><strong>${sup.supervisor}</strong></td>
                     <td>${sup.total}</td>
-                    <td style="color: #28a745; font-weight: 600;">${sup.presente}</td>
-                    <td style="color: #dc3545;">${sup.ausente}</td>
-                    <td style="color: #ffc107;">${sup.atestado || 0}</td>
-                    <td style="color: #ffc107;">${sup.ferias}</td>
-                    <td style="color: #17a2b8;">${sup.folga}</td>
+                    <td style="color: var(--green); font-weight: 600;">${sup.presente}</td>
+                    <td style="color: var(--red);">${sup.ausente}</td>
+                    <td style="color: var(--amber);">${sup.atestado || 0}</td>
+                    <td style="color: var(--amber);">${sup.ferias}</td>
+                    <td style="color: var(--blue);">${sup.folga}</td>
                     <td>${sup.afastado}</td>
-                    <td style="color: #dc3545; font-weight: 600;">${sup.desvio || 0}</td>
+                    <td style="color: var(--red); font-weight: 600;">${sup.desvio || 0}</td>
                     <td>${sup.outros}</td>
                     <td>
                         <div class="barra-progresso">
@@ -965,7 +780,7 @@
                             ${sup.colaboradores.map(c => `
                                 <div class="colaborador-item">
                                     <strong>${c.nome}</strong> (${c.matricula}) - <strong>${c.funcao}</strong> - Turno: ${c.turno} - 
-                                    <span style="color: ${c.status === 'Presente' ? '#28a745' : c.desvio === 'Desvio' ? '#dc3545' : '#6c757d'};">
+                                    <span style="color: ${c.status === 'Presente' ? 'var(--green)' : c.desvio === 'Desvio' ? 'var(--red)' : 'var(--muted)'};">
                                         ${c.status}${c.desvio === 'Desvio' ? ' (DESVIO)' : ''}
                                     </span>
                                 </div>
@@ -992,13 +807,13 @@
                 tr.innerHTML = `
                     <td><strong>${func.funcao}</strong></td>
                     <td>${func.total}</td>
-                    <td style="color: #28a745; font-weight: 600;">${func.presente}</td>
-                    <td style="color: #dc3545;">${func.ausente}</td>
-                    <td style="color: #ffc107;">${func.atestado || 0}</td>
-                    <td style="color: #ffc107;">${func.ferias}</td>
-                    <td style="color: #17a2b8;">${func.folga}</td>
+                    <td style="color: var(--green); font-weight: 600;">${func.presente}</td>
+                    <td style="color: var(--red);">${func.ausente}</td>
+                    <td style="color: var(--amber);">${func.atestado || 0}</td>
+                    <td style="color: var(--amber);">${func.ferias}</td>
+                    <td style="color: var(--blue);">${func.folga}</td>
                     <td>${func.afastado}</td>
-                    <td style="color: #dc3545; font-weight: 600;">${func.desvio || 0}</td>
+                    <td style="color: var(--red); font-weight: 600;">${func.desvio || 0}</td>
                     <td>${func.outros}</td>
                     <td>
                         <div class="barra-progresso">
@@ -1015,7 +830,7 @@
                             ${func.colaboradores.map(c => `
                                 <div class="colaborador-item">
                                     <strong>${c.nome}</strong> (${c.matricula}) - ${c.supervisor} - Turno: ${c.turno} - 
-                                    <span style="color: ${c.status === 'Presente' ? '#28a745' : c.desvio === 'Desvio' ? '#dc3545' : '#6c757d'};">
+                                    <span style="color: ${c.status === 'Presente' ? 'var(--green)' : c.desvio === 'Desvio' ? 'var(--red)' : 'var(--muted)'};">
                                         ${c.status}${c.desvio === 'Desvio' ? ' (DESVIO)' : ''}
                                     </span>
                                 </div>
@@ -1049,7 +864,7 @@
             if (desvios.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 30px; color: #28a745;">
+                        <td colspan="7" style="text-align: center; padding: 30px; color: var(--green);">
                             <i class="fas fa-check-circle" style="font-size: 32px; margin-bottom: 10px;"></i>
                             <p style="font-size: 16px; font-weight: 600;">Nenhum desvio encontrado para esta data!</p>
                         </td>
@@ -1066,7 +881,7 @@
                     <td>${desvio.funcao}</td>
                     <td>${desvio.supervisor}</td>
                     <td>${desvio.turno}</td>
-                    <td><span style="color: #dc3545; font-weight: 600;">${desvio.status}</span></td>
+                    <td><span style="color: var(--red); font-weight: 600;">${desvio.status}</span></td>
                     <td>${desvio.observacao || '-'}</td>
                 `;
                 tbody.appendChild(tr);
@@ -1153,5 +968,6 @@
 
         console.log('[RESUMO] Script carregado');
     </script>
+    <script src="/js/ui.js"></script>
 </body>
 </html>

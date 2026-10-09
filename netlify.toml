@@ -66,6 +66,21 @@
   status = 200
 
 [[redirects]]
+  from = "/recebimento"
+  to = "/recebimento.html"
+  status = 200
+
+[[redirects]]
+  from = "/recebimento-agenda"
+  to = "/recebimento-agenda.html"
+  status = 200
+
+[[redirects]]
+  from = "/usuarios"
+  to = "/usuarios.html"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

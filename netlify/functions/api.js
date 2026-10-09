@@ -9,6 +9,8 @@ const resumoBaseHandler = require('../../api/producao/resumo-base');
 const producaoDadosHandler = require('../../api/producao/dados');
 const qlpDadosHandler = require('../../api/qlp/dados');
 const qlpQuadroHandler = require('../../api/qlp/quadro');
+const recebimentoHandler = require('../../api/recebimento');
+const usuariosHandler = require('../../api/usuarios');
 
 function buildReq(event) {
   const body = event.body
@@ -78,6 +80,10 @@ exports.handler = async (event) => {
       await qlpQuadroHandler(req, res);
     } else if (path.startsWith('/qlp/dados')) {
       await qlpDadosHandler(req, res);
+    } else if (path.startsWith('/recebimento')) {
+      await recebimentoHandler(req, res);
+    } else if (path.startsWith('/usuarios')) {
+      await usuariosHandler(req, res);
     } else {
       return { statusCode: 404, headers, body: JSON.stringify({ ok: false, msg: 'Rota não encontrada: ' + path }) };
     }
