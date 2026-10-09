@@ -184,10 +184,67 @@
     render();
   }
 
+  // ===== Painéis de filtro recolhíveis =====
+  // Qualquer painel de filtros ganha um botão "Filtros" que abre/fecha o painel.
+  const SELETOR_FILTROS = '.filtros, .filters, .filters-panel, .filter-panel, [data-filtros]';
+
+  function filtrosAtivos(painel) {
+    let qtd = 0;
+    painel.querySelectorAll('select').forEach(s => {
+      if ([...s.selectedOptions].some(o => o.value && !o.defaultSelected)) qtd++;
+    });
+    painel.querySelectorAll('input[type="text"], input[type="search"], input[type="date"], input:not([type])').forEach(i => {
+      if (i.value && i.value !== i.defaultValue) qtd++;
+    });
+    return qtd;
+  }
+
+  function montarFiltro(painel) {
+    if (painel._filtro) return;
+    const chave = 'filtros-abertos:' + location.pathname;
+    let aberto = false;
+    try { aberto = localStorage.getItem(chave) === '1'; } catch (e) { /* sem storage */ }
+
+    const barra = document.createElement('div');
+    barra.className = 'barra-filtro';
+    barra.innerHTML = `<button type="button" class="btn btn-secondary btn-filtro">
+        <i class="fas fa-filter"></i> Filtros <span class="qtd-filtros"></span>
+        <i class="fas fa-chevron-down seta"></i></button>`;
+    painel.insertAdjacentElement('beforebegin', barra);
+    painel.classList.add('filtro-recolhivel');
+
+    const botao = barra.querySelector('button');
+    const qtd = barra.querySelector('.qtd-filtros');
+
+    function aplicarEstado() {
+      painel.classList.toggle('filtro-fechado', !aberto);
+      botao.classList.toggle('ativo', aberto);
+    }
+
+    function contar() {
+      const n = filtrosAtivos(painel);
+      qtd.textContent = n ? n : '';
+    }
+
+    botao.addEventListener('click', () => {
+      aberto = !aberto;
+      try { localStorage.setItem(chave, aberto ? '1' : '0'); } catch (e) { /* sem storage */ }
+      aplicarEstado();
+    });
+
+    painel.addEventListener('change', contar);
+    painel.addEventListener('input', contar);
+    painel.addEventListener('click', () => setTimeout(contar, 0));
+    painel._filtro = { contar };
+    aplicarEstado();
+    contar();
+  }
+
   function aplicar(raiz = document) {
     raiz.querySelectorAll('select[multiple], select[data-busca]').forEach(s => {
       if (!s.hasAttribute('data-nativo')) montar(s);
     });
+    raiz.querySelectorAll(SELETOR_FILTROS).forEach(montarFiltro);
   }
 
   window.UI = { aplicar, atualizar: s => s._dd && s._dd.render() };
