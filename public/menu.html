@@ -286,11 +286,33 @@
             }
         }
 
+        // Busca na planilha as áreas atuais do usuário (permissões alteradas depois do login)
+        async function atualizarAreas() {
+            const token = sessionStorage.getItem('token');
+            if (!token) return;
+            try {
+                const resp = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'minhasAreas', token })
+                });
+                const r = await resp.json();
+                if (!r.ok || !Array.isArray(r.abas) || !r.abas.length) return;
+                if (JSON.stringify(r.abas) === JSON.stringify(areasSelecionadas)) return;
+                areasSelecionadas = r.abas;
+                sessionStorage.setItem('abas', JSON.stringify(r.abas));
+                criarCardsAreas();
+            } catch (e) {
+                console.warn('Não foi possível atualizar as áreas:', e.message);
+            }
+        }
+
         window.onload = function() {
             console.log('Menu carregando...');
             
             if (carregarDadosUsuario()) {
                 criarCardsAreas();
+                atualizarAreas();
                 showStatus('<i class="fas fa-check"></i> Menu carregado com sucesso', 'success');
                 setTimeout(() => {
                     document.getElementById('menuStatus').innerHTML = '';

@@ -1,6 +1,6 @@
 // api/auth.js - VERSÃO CORRIGIDA
 const sheetsService = require('../lib/sheets');
-const { gerarToken } = require('../lib/auth_token');
+const { gerarToken, validarToken } = require('../lib/auth_token');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -49,6 +49,14 @@ module.exports = async function handler(req, res) {
           msg: 'Erro ao validar credenciais: ' + loginError.message
         });
       }
+    }
+
+    // ÁREAS ATUAIS DO USUÁRIO LOGADO (menu atualiza sem novo login)
+    if (action === 'minhasAreas') {
+      const sessao = validarToken(req.body.token);
+      if (!sessao) return res.status(401).json({ ok: false, msg: 'Sessão expirada' });
+      const abas = await sheetsService.areasDoUsuario(sessao.usuario);
+      return res.status(200).json({ ok: true, usuario: sessao.usuario, abas });
     }
 
     // TESTE DE CONEXÃO
