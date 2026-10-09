@@ -79,10 +79,10 @@
       margin-top: 10px;
       width: 100%;
     }
-    button:hover:not(:disabled) { background: var(--primary-hover); }
+    button:not(.nav-btn):hover:not(:disabled) { background: var(--primary-hover); }
     button:disabled { opacity: .5; cursor: not-allowed; }
     .button-group { display: flex; gap: 8px; }
-    .button-group button:nth-child(2) { background: var(--surface); color: var(--text); border-color: var(--border-forte); }
+    .button-group button:nth-child(2), .button-group button:nth-child(2):hover:not(:disabled) { background: var(--surface); color: var(--text); border-color: var(--border-forte); }
 
     .painel-central { display: flex; flex: 1; gap: 20px; min-width: 0; }
     .coletor-container, .chave-container { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -212,7 +212,7 @@
       </select>
 
       <label>Situação:</label>
-      <div class="situacao-group">
+      <div class="situacao-group" id="situacoesColetor">
         <input type="radio" name="situacao" id="ok" value="OK">
         <label for="ok">OK</label>
         
@@ -285,7 +285,7 @@
       </select>
 
       <label>Situação:</label>
-      <div class="situacao-group">
+      <div class="situacao-group" id="situacoesChave">
         <input type="radio" name="situacaoChave" id="okChave" value="OK">
         <label for="okChave">OK</label>
         
@@ -885,12 +885,36 @@
       supervisorDiv.innerHTML = supHTML;
     }
     
+    // ==================== SITUAÇÕES (aba Situações) ====================
+
+    // Recria as opções de situação; o "OK" mantém o id usado pelo estilo verde
+    function renderSituacoes(idGrupo, nome, idOk, lista) {
+      const grupo = document.getElementById(idGrupo);
+      const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      grupo.innerHTML = lista.map((valor, i) => {
+        const id = valor.toUpperCase() === 'OK' ? idOk : `${nome}-${i}`;
+        return `<input type="radio" name="${nome}" id="${id}" value="${esc(valor)}">
+        <label for="${id}">${esc(valor)}</label>`;
+      }).join('');
+    }
+
+    async function carregarSituacoes() {
+      try {
+        const r = await apiRequest('obterSituacoes');
+        if (!r.ok) return;
+        if (r.coletores && r.coletores.length) renderSituacoes('situacoesColetor', 'situacao', 'ok', r.coletores);
+        if (r.chaves && r.chaves.length) renderSituacoes('situacoesChave', 'situacaoChave', 'okChave', r.chaves);
+      } catch (e) {
+        console.warn('[SISTEMA] Situações padrão mantidas:', e.message);
+      }
+    }
+
     // ==================== INICIALIZAÇÃO ====================
     
     window.onload = async () => {
       console.log('[SISTEMA] Inicializando aplicação...');
       
-      await carregarColaboradores();
+      await Promise.all([carregarColaboradores(), carregarSituacoes()]);
       await carregarStatusColetores();
       
       // Auto-refresh a cada 30 segundos

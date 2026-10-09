@@ -30,6 +30,7 @@ module.exports = async function handler(req, res) {
         msg: 'Action é obrigatória',
         acoesDisponiveis: [
           'obterDados',
+          'obterSituacoes',
           'salvarRegistro',
           'obterColetorStatus',
           'obterResumoColetores',
@@ -48,6 +49,17 @@ module.exports = async function handler(req, res) {
     switch (action) {
       // ==================== ROTAS PARA COLETORES ====================
       
+      // ===== OPÇÕES DE SITUAÇÃO (aba Situações) =====
+      case 'obterSituacoes': {
+        try {
+          const situacoes = await sheetsColetorService.obterSituacoes();
+          return res.status(200).json({ ok: true, ...situacoes });
+        } catch (error) {
+          console.error('[API COLETORES] Erro ao buscar situações:', error);
+          return res.status(500).json({ ok: false, msg: 'Erro ao buscar situações: ' + error.message });
+        }
+      }
+
       // ===== BUSCAR COLABORADORES =====
       case 'obterDados': {
         console.log('[API COLETORES] Buscando dados do quadro...');
