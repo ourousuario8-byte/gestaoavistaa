@@ -161,16 +161,13 @@
             </div>
 
             <div>
-              <label>Situação das notas <span class="obrig">*</span></label>
-              <div class="escolha">
-                <label class="ok"><input type="radio" name="problema" value="nao" checked><i class="fas fa-check-circle"></i> Tudo OK</label>
-                <label class="nok"><input type="radio" name="problema" value="sim"><i class="fas fa-exclamation-circle"></i> Tem problema</label>
-              </div>
+              <label for="situacao">Situação <span class="obrig">*</span></label>
+              <select id="situacao" data-busca data-placeholder="Selecione a situação"></select>
             </div>
 
             <div class="campo-largo oculto" id="campoObservacoes">
-              <label for="observacoes">Qual o problema? <span class="obrig">*</span></label>
-              <select id="observacoes" multiple data-placeholder="Selecione o(s) problema(s)"></select>
+              <label for="observacoes">Observações do problema</label>
+              <select id="observacoes" multiple data-placeholder="Selecione se precisar detalhar"></select>
             </div>
 
             <div id="campoCarga">
@@ -278,7 +275,7 @@
           <thead>
             <tr>
               <th>Etapa</th><th>Fornecedor</th><th>Notas</th><th>Agenda</th><th>Chegada</th>
-              <th>Problema</th><th>Carga</th><th>Início</th><th>Conferente</th><th>Fim</th><th>Divergência</th><th></th>
+              <th>Situação</th><th>Carga</th><th>Início</th><th>Conferente</th><th>Fim</th><th>Divergência</th><th></th>
             </tr>
           </thead>
           <tbody id="tbody"><tr><td class="vazio" colspan="12">Carregando...</td></tr></tbody>
@@ -295,6 +292,7 @@
 
     let opcoes = { fornecedores: [], observacoes: [], divergencias: [], conferentes: [], agendaDia: [] };
     let recebimentos = [];
+    let situacoesOk = new Set(); // situações que liberam a carga (ex.: "Tudo OK")
 
     // ===== Utilitários =====
     function esc(v) {
@@ -504,6 +502,9 @@
             { rotulo: 'Todos os fornecedores', itens: (r.fornecedores || []).filter(f => !agendados.has(f.toLowerCase())).map(f => ({ valor: f, texto: f })) },
           ],
         });
+        preencherSelect($('situacao'), (r.situacoes || []).map(sit => ({ valor: sit.nome, texto: sit.nome })));
+        situacoesOk = new Set((r.situacoes || []).filter(sit => sit.ok).map(sit => sit.nome));
+        atualizarProblema();
         preencherSelect($('observacoes'), r.observacoes || [], { vazio: false });
         preencherSelect($('qualDivergencia'), r.divergencias || [], { vazio: false });
         preencherSelect($('conferente'), (r.conferentes || []).map(c => ({ valor: c.nome, texto: c.nome, extra: c.funcao })));
@@ -514,17 +515,19 @@
 
     // ===== 2. CHEGADA =====
     function problemaSelecionado() {
-      return document.querySelector('input[name="problema"]:checked').value === 'sim';
+      const situacao = $('situacao').value;
+      return !!situacao && !situacoesOk.has(situacao);
     }
 
-    // Com problema: escolhe as observações. Tudo OK: pode informar a carga.
+    // Situação OK: pode informar a carga. Problema: pode detalhar com as observações.
     function atualizarProblema() {
+      const situacao = $('situacao').value;
       const problema = problemaSelecionado();
       $('campoObservacoes').classList.toggle('oculto', !problema);
-      $('campoCarga').classList.toggle('oculto', problema);
+      $('campoCarga').classList.toggle('oculto', !situacao || problema);
     }
 
-    document.querySelectorAll('input[name="problema"]').forEach(r => r.addEventListener('change', atualizarProblema));
+    $('situacao').addEventListener('change', atualizarProblema);
 
     function renderSugestoes() {
       const fornecedor = $('fornecedor').value;
@@ -572,6 +575,7 @@
     function limparChegada() {
       $('formChegada').reset();
       $('fornecedor').value = '';
+      $('situacao').value = '';
       desmarcar($('observacoes'));
       $('horaChegada').value = horaAtual();
       atualizarProblema();
@@ -588,14 +592,14 @@
         fornecedor: $('fornecedor').value,
         notaFiscal: $('notaFiscal').value,
         horaChegada: $('horaChegada').value,
-        problema,
+        situacao: $('situacao').value,
         observacoes: problema ? valoresSelecionados($('observacoes')) : [],
         carga: problema ? '' : $('carga').value.trim(),
       };
 
       if (!dados.fornecedor) return showStatus('statusChegada', 'Selecione o fornecedor.', 'error');
       if (!separarNotas(dados.notaFiscal).length) return showStatus('statusChegada', 'Informe ao menos uma nota fiscal.', 'error');
-      if (problema && !dados.observacoes.length) return showStatus('statusChegada', 'Selecione qual é o problema.', 'error');
+      if (!dados.situacao) return showStatus('statusChegada', 'Selecione a situação.', 'error');
 
       await enviar('btnChegada', 'statusChegada', dados, limparChegada);
     });
@@ -714,7 +718,9 @@
           <td class="quebra">${esc(r['Nota Fiscal'])}</td>
           <td><span class="badge ${r['Status Agenda'] === 'Agendado' ? 'badge-ok' : 'badge-sem'}">${esc(r['Status Agenda'])}</span></td>
           <td>${esc(r['Hora Chegada'])}</td>
-          <td class="quebra">${r['Problema'] === 'Sim' ? `<span class="badge badge-sem">Sim</span> ${esc(r['Observação'])}` : '<span class="contador">Não</span>'}</td>
+          <td class="quebra">${r['Situação']
+            ? `<span class="badge ${r['Problema'] === 'Sim' ? 'badge-sem' : 'badge-ok'}">${esc(r['Situação'])}</span> ${esc(r['Observação'])}`
+            : r['Problema'] === 'Sim' ? `<span class="badge badge-sem">Problema</span> ${esc(r['Observação'])}` : '<span class="contador">OK</span>'}</td>
           <td><div class="carga-cel" data-carga="${id}">${esc(r['Carga']) || '<span class="contador">—</span>'}
             <button class="link-btn" data-editar-carga="${id}" title="Incluir/alterar carga"><i class="fas fa-pen"></i></button></div></td>
           <td>${esc(r['Hora Início'])}</td>
