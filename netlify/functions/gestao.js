@@ -1,4 +1,6 @@
-// netlify/functions/api.js
+// netlify/functions/gestao.js
+// Não chamar esta função de "api": o Netlify empacota a pasta api/ do projeto
+// junto e o runtime tenta importar a pasta em vez do arquivo (ERR_UNSUPPORTED_DIR_IMPORT)
 const authHandler = require('../../api/auth');
 const colaboradoresHandler = require('../../api/colaboradores');
 const coletoresHandler = require('../../api/coletores');
@@ -55,7 +57,7 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers, body: '' };
   }
 
-  const path = event.path.replace('/.netlify/functions/api', '').replace('/api', '');
+  const path = event.path.replace('/.netlify/functions/gestao', '').replace('/api', '');
   const req = buildReq(event);
   const res = buildRes();
 
