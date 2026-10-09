@@ -180,6 +180,10 @@
                 'Alocação BOX': 'fas fa-warehouse',
                 'Coletores': 'fas fa-mobile-alt',
                 'Resumo equipamentos': 'fas fa-mobile-alt',
+                'Resumo Base': 'fas fa-chart-pie',
+                'Painel de Presença': 'fas fa-clipboard-list',
+                'Produção': 'fas fa-calculator',
+                'Controle de Equipamentos': 'fas fa-barcode',
                 'Recebimento': 'fas fa-truck',
                 'Usuários': 'fas fa-user-shield',
                 'default': 'fas fa-building'
@@ -229,6 +233,30 @@
             }, 2000);
         }
 
+        // Área (coluna "Aba" da aba Usuarios) → tela. A ordem importa: o primeiro termo que bater vale.
+        const DESTINOS = [
+            { termos: ['usuarios'],                                             url: '/usuarios' },
+            { termos: ['agenda do portal'],                                     url: '/recebimento#agenda' },
+            { termos: ['recebimento'],                                          url: '/recebimento' },
+            { termos: ['resumo base', 'resumo presenca', 'resumo de presenca'], url: '/resumo-base' },
+            { termos: ['resumo equipamentos', 'resumo de equipamentos', 'painel equipamentos'], url: '/resumo-equipamentos' },
+            { termos: ['controle de equipamentos', 'coletor', 'rfid'],          url: '/controle-coletores' },
+            { termos: ['producao', 'produtividade', 'calculadora'],             url: '/producao' },
+            { termos: ['qlp'],                                                  url: '/qlp' },
+            { termos: ['mapa de carga'],                                        url: '/mapacarga' },
+            { termos: ['alocacao box'],                                         url: '/alocacaobox' },
+            { termos: ['avaria'],                                               url: '/avaria' },
+            { termos: ['painel de presenca', 'presenca'],                       url: '/painel' },
+            { termos: ['gestao'],                                               url: '/ferramentas' },
+        ];
+
+        function destinoDaArea(area) {
+            const a = String(area || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            const destino = DESTINOS.find(d => d.termos.some(t => a.includes(t)));
+            // Demais áreas (ex.: "WMS TA") abrem o painel de presença daquela área
+            return destino ? destino.url : '/painel';
+        }
+
         function abrirPainel() {
             if (!areaSelecionada) {
                 showStatus('<i class="fas fa-exclamation-triangle"></i> Selecione uma área primeiro', 'warning');
@@ -246,40 +274,7 @@
             sessionStorage.setItem('abaSelecionada', areaSelecionada);
             
             setTimeout(() => {
-                const areaLower = areaSelecionada.toLowerCase();
-                
-                // Áreas com acesso direto (ferramentas específicas)
-                if (areaLower.includes('qlp')) {
-                    window.location.href = '/qlp';
-                } else if (areaLower.includes('mapa de carga')) {
-                    window.location.href = '/mapacarga';
-                } else if (areaLower.includes('alocação box') || areaLower.includes('alocacao box')) {
-                    window.location.href = '/alocacaobox';
-                } else if (areaLower.includes('coletor') || areaLower.includes('rfid')) {
-                    window.location.href = '/controle-coletores';
-                } else if (areaLower.includes('avaria') || areaLower.includes('rfid')) {
-                    window.location.href = '/avaria';                    
-                } else if (areaLower.includes('painel equipamentos') || areaLower.includes('rfid')) {
-                    window.location.href = '/resumo-equipamentos';
-                } else if (areaLower.includes('recebimento')) {
-                    window.location.href = '/recebimento';
-                } else if (areaLower.includes('usuários') || areaLower.includes('usuarios')) {
-                    window.location.href = '/usuarios';
-                } 
-                    
-                // Áreas com múltiplas ferramentas
-                else {
-                    const areasComFerramentas = ['gestão', 'gestao'];
-                    const temFerramentas = areasComFerramentas.some(area => areaLower.includes(area));
-                    
-                    if (temFerramentas) {
-                        // Vai para página de seleção de ferramentas
-                        window.location.href = '/ferramentas';
-                    } else {
-                        // Vai direto para o painel de presença
-                        window.location.href = '/painel';
-                    }
-                }
+                window.location.href = destinoDaArea(areaSelecionada);
             }, 500);
         }
 
