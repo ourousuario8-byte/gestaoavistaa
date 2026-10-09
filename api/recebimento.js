@@ -3,7 +3,7 @@ const sheetsRecebimento = require('../lib/sheets_recebimento');
 const ACOES = [
   'obterOpcoes', 'obterAgenda', 'importarAgenda', 'verificarAgenda',
   'registrarChegada', 'registrarInicio', 'registrarFim', 'atualizarCarga',
-  'obterRecebimentos', 'testarConexao',
+  'obterRecebimentos', 'criarAbas', 'testarConexao',
 ];
 
 module.exports = async function handler(req, res) {
@@ -57,6 +57,10 @@ module.exports = async function handler(req, res) {
         const filtros = req.method === 'POST' ? req.body?.filtros : req.query;
         return res.status(200).json(await sheetsRecebimento.obterRecebimentos(filtros || {}));
       }
+
+      // GET /api/recebimento?action=criarAbas — cria as abas que não existem
+      case 'criarAbas':
+        return res.status(200).json(await sheetsRecebimento.criarAbas());
 
       case 'testarConexao': {
         const doc = await sheetsRecebimento.init();
