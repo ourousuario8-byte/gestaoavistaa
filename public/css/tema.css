@@ -677,3 +677,30 @@ thead { background: var(--surface-2); }
   .filters-grid, .filters-row { grid-template-columns: 1fr; }
   .stats, .resumo-cards, .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 }
+
+/* ===== Filtros recolhíveis (js/ui.js) ===== */
+.barra-filtro { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+
+.btn-filtro .qtd-filtros {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 11px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-filtro .qtd-filtros:empty { display: none; }
+.btn-filtro .seta { font-size: 11px; color: var(--muted); transition: transform .15s; }
+.btn-filtro.ativo { background: var(--primary-soft); color: var(--primary-text); border-color: transparent; }
+.btn-filtro.ativo .seta { transform: rotate(180deg); }
+
+.filtro-recolhivel.filtro-fechado { display: none !important; }
+
+@media (max-width: 640px) {
+  .barra-filtro .btn-filtro { width: 100%; }
+}

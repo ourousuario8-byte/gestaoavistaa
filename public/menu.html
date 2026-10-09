@@ -7,233 +7,299 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="/css/tema.css" rel="stylesheet">
     <style>
+        body { padding: 0; }
 
-        body { display: flex; align-items: center; justify-content: center; }
+        .app { display: flex; min-height: 100vh; }
 
-        .menu-container {
+        /* ===== Barra lateral ===== */
+        .lateral {
+            width: 260px;
+            flex-shrink: 0;
             background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            box-shadow: var(--shadow);
-            padding: clamp(22px, 5vw, 40px);
-            width: 100%;
-            max-width: 920px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            transition: width .2s ease;
+            z-index: 40;
         }
 
-        .user-info { text-align: center; margin-bottom: 28px; }
-        .user-info i {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
+        .lateral-topo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 16px;
+            border-bottom: 1px solid var(--border);
+            min-height: 72px;
+        }
+
+        .logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
             background: var(--primary-soft);
             color: var(--primary-text);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 30px;
-            margin-bottom: 12px;
+            flex-shrink: 0;
         }
-        .user-info h2 { font-size: 22px; font-weight: 700; }
-        .user-info p { color: var(--muted); }
 
-        .areas-section h3 { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 14px; display: flex; gap: 8px; align-items: center; }
+        .marca { min-width: 0; }
+        .marca strong { display: block; font-size: 15px; }
+        .marca small { color: var(--muted); font-size: 12px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        .areas-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        .btn-recolher {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-recolher:hover { background: var(--surface-2); color: var(--text); }
+
+        .nav-titulo {
+            padding: 16px 18px 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .nav-lista { flex: 1; overflow-y: auto; padding: 4px 10px 10px; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
             gap: 12px;
-            margin-bottom: 24px;
+            width: 100%;
+            padding: 10px 12px;
+            border: none;
+            background: none;
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            text-decoration: none;
+            margin-bottom: 2px;
         }
 
-        .area-card {
+        .nav-item i { width: 20px; text-align: center; color: var(--muted); flex-shrink: 0; }
+        .nav-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .nav-item:hover { background: var(--surface-2); }
+        .nav-item.ativo { background: var(--primary-soft); color: var(--primary-text); }
+        .nav-item.ativo i { color: var(--primary-text); }
+
+        .lateral-rodape { padding: 10px; border-top: 1px solid var(--border); }
+        .lateral-rodape .nav-item { color: var(--red); }
+        .lateral-rodape .nav-item i { color: var(--red); }
+
+        /* Recolhida: só ícones */
+        .app.recolhido .lateral { width: 72px; }
+        .app.recolhido .marca,
+        .app.recolhido .nav-titulo,
+        .app.recolhido .nav-item span { display: none; }
+        .app.recolhido .lateral-topo { flex-direction: column; padding: 14px 10px; gap: 8px; }
+        .app.recolhido .btn-recolher { margin: 0; }
+        .app.recolhido .btn-recolher i { transform: rotate(180deg); }
+        .app.recolhido .nav-item { justify-content: center; padding: 11px 0; }
+
+        /* ===== Conteúdo ===== */
+        .conteudo { flex: 1; min-width: 0; padding: var(--gutter); }
+
+        .topo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .topo h1 { font-size: clamp(20px, 2.6vw, 26px); font-weight: 700; letter-spacing: -.01em; }
+        .topo p { color: var(--muted); font-size: 14px; }
+        .topo .acoes-topo { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+        .btn-menu-mobile { display: none; }
+
+        /* ===== Dashboard ===== */
+        .dash {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 18px;
+        }
+
+        .modulo {
+            background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 18px 16px;
-            cursor: pointer;
-            background: var(--surface);
-            transition: .15s;
-            display: grid;
-            grid-template-columns: auto 1fr;
-            column-gap: 14px;
-            align-items: center;
-            text-align: left;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
         }
 
-        .area-card:hover { border-color: var(--border-forte); background: var(--surface-2); }
-        .area-card.selected { background: var(--primary-soft); border-color: var(--primary); }
+        .modulo-topo { display: flex; align-items: center; gap: 12px; }
 
-        .area-card i {
-            grid-row: span 2;
-            width: 42px;
-            height: 42px;
+        .modulo-icone {
+            width: 40px;
+            height: 40px;
             border-radius: 12px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            color: var(--primary-text);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 17px;
+            flex-shrink: 0;
         }
 
-        .area-card.selected i { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .area-card h4 { font-size: 15px; font-weight: 600; }
-        .area-card p { font-size: 12px; color: var(--muted); }
+        .modulo-topo h2 { font-size: 16px; font-weight: 600; }
+        .modulo-topo small { color: var(--muted); font-size: 12px; display: block; }
+        .modulo-topo a { margin-left: auto; font-size: 13px; color: var(--primary-text); text-decoration: none; font-weight: 600; white-space: nowrap; }
+        .modulo-topo a:hover { text-decoration: underline; }
 
-        .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .actions .btn { min-width: 160px; padding: 12px 20px; }
+        .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 
-        .status { display: block; margin-top: 16px; text-align: center; }
-        .status:empty { display: none; }
-        .status.warning { background: var(--amber-soft); color: var(--amber); }
-
-        @media (max-width: 600px) {
-            .areas-grid { grid-template-columns: 1fr; }
-            .actions .btn { flex: 1; min-width: 0; }
+        .kpi {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
         }
 
-        .loading { display: inline-block; animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .kpi .v { font-size: clamp(20px, 2.4vw, 26px); font-weight: 700; line-height: 1.1; }
+        .kpi .r { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-top: 4px; }
+        .kpi.verde .v { color: var(--green); }
+        .kpi.vermelho .v { color: var(--red); }
+        .kpi.ambar .v { color: var(--amber); }
+        .kpi.azul .v { color: var(--blue); }
+
+        .barra { height: 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; display: flex; }
+        .barra span { height: 100%; }
+        .legenda { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); }
+        .legenda i { font-size: 8px; margin-right: 4px; vertical-align: middle; }
+
+        .lista-mini { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+        .lista-mini div { display: flex; justify-content: space-between; gap: 10px; }
+        .lista-mini span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+        .lista-mini strong { font-variant-numeric: tabular-nums; }
+
+        .carregando, .erro-modulo { color: var(--muted); font-size: 13px; padding: 18px 0; text-align: center; }
+        .erro-modulo { color: var(--red); }
+
+        .vazio-dash {
+            background: var(--surface);
+            border: 1px dashed var(--border-forte);
+            border-radius: var(--radius);
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .vazio-dash i { font-size: 30px; color: var(--primary); margin-bottom: 10px; display: block; }
+
+        .fundo-mobile { display: none; }
+
+        /* ===== Celular: barra lateral sobreposta ===== */
+        @media (max-width: 900px) {
+            .lateral {
+                position: fixed;
+                left: 0;
+                top: 0;
+                transform: translateX(-100%);
+                transition: transform .2s ease;
+                width: 270px !important;
+                box-shadow: 0 12px 40px rgba(47, 52, 55, .18);
+            }
+
+            .app.mobile-aberto .lateral { transform: none; }
+            .app.mobile-aberto .fundo-mobile { display: block; position: fixed; inset: 0; background: rgba(47, 52, 55, .3); z-index: 30; }
+
+            /* No celular a barra sempre mostra os nomes */
+            .app.recolhido .marca, .app.recolhido .nav-titulo, .app.recolhido .nav-item span { display: initial; }
+            .app.recolhido .nav-item { justify-content: flex-start; padding: 10px 12px; }
+            .app.recolhido .lateral-topo { flex-direction: row; }
+            .btn-recolher { display: none; }
+
+            .btn-menu-mobile { display: inline-flex; }
+            .dash { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 420px) {
+            .kpis { gap: 8px; }
+            .kpi { padding: 10px 8px; }
+            .kpi .r { font-size: 10px; letter-spacing: .02em; }
+        }
     </style>
 </head>
 <body>
-    <div class="menu-container">
-        <div class="user-info">
-            <i class="fas fa-user-circle"></i>
-            <h2>Bem-vindo!</h2>
-            <p id="userName">Carregando...</p>
-        </div>
-        
-        <div class="areas-section">
-            <h3><i class="fas fa-th-large"></i> Selecione uma Área</h3>
-            <div class="areas-grid" id="areasGrid">
-                <!-- As áreas serão carregadas dinamicamente -->
+    <div class="app" id="app">
+        <aside class="lateral" id="lateral">
+            <div class="lateral-topo">
+                <span class="logo"><i class="fas fa-layer-group"></i></span>
+                <div class="marca">
+                    <strong>Gestão Perlog</strong>
+                    <small id="userName">-</small>
+                </div>
+                <button class="btn-recolher" id="btnRecolher" title="Recolher menu"><i class="fas fa-angles-left"></i></button>
             </div>
-        </div>
-        
-        <div class="actions">
-            <button class="btn btn-primary" id="abrirBtn" disabled onclick="abrirPainel()">
-                <i class="fas fa-arrow-right"></i> Continuar
-            </button>
-            <button class="btn btn-secondary" onclick="sair()">
-                <i class="fas fa-sign-out-alt"></i> Sair
-            </button>
-        </div>
-        
-        <div id="menuStatus"></div>
+
+            <div class="nav-titulo">Áreas</div>
+            <nav class="nav-lista" id="navAreas"></nav>
+
+            <div class="lateral-rodape">
+                <button class="nav-item" onclick="sair()"><i class="fas fa-sign-out-alt"></i><span>Sair</span></button>
+            </div>
+        </aside>
+        <div class="fundo-mobile" id="fundoMobile"></div>
+
+        <main class="conteudo">
+            <div class="topo">
+                <button class="btn btn-secondary btn-menu-mobile" id="btnMenuMobile" title="Menu"><i class="fas fa-bars"></i></button>
+                <div>
+                    <h1>Dashboard gerencial</h1>
+                    <p id="dataHoje">-</p>
+                </div>
+                <div class="acoes-topo">
+                    <button class="btn btn-secondary btn-sm" onclick="carregarDashboard()" title="Atualizar"><i class="fas fa-sync"></i> Atualizar</button>
+                </div>
+            </div>
+
+            <div class="dash" id="dash"></div>
+            <div id="menuStatus"></div>
+        </main>
     </div>
 
     <script>
         let usuarioLogado = '';
         let areasSelecionadas = [];
-        let areaSelecionada = '';
+
+        const $ = id => document.getElementById(id);
+
+        function esc(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function semAcento(v) {
+            return String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+        }
 
         function showStatus(message, type = 'info') {
-            const statusEl = document.getElementById('menuStatus');
-            statusEl.innerHTML = message;
-            statusEl.className = `status ${type}`;
+            $('menuStatus').innerHTML = message;
+            $('menuStatus').className = `status show ${type}`;
         }
 
-        function carregarDadosUsuario() {
-            usuarioLogado = sessionStorage.getItem('usuario');
-            const abasString = sessionStorage.getItem('abas');
-            
-            console.log('Dados carregados:', { usuarioLogado, abasString });
-            
-            if (!usuarioLogado || !abasString) {
-                showStatus('<i class="fas fa-exclamation-triangle"></i> Sessão expirada. Redirecionando para login...', 'error');
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 2000);
-                return false;
-            }
-            
-            try {
-                areasSelecionadas = JSON.parse(abasString);
-                document.getElementById('userName').textContent = usuarioLogado;
-                console.log('Áreas disponíveis:', areasSelecionadas);
-                return true;
-            } catch (error) {
-                console.error('Erro ao carregar dados do usuário:', error);
-                showStatus('<i class="fas fa-exclamation-triangle"></i> Erro nos dados da sessão', 'error');
-                return false;
-            }
-        }
-
-        function criarCardsAreas() {
-            const grid = document.getElementById('areasGrid');
-            grid.innerHTML = '';
-            
-            if (!areasSelecionadas || areasSelecionadas.length === 0) {
-                grid.innerHTML = '<p style="color: #666; font-style: italic;">Nenhuma área disponível para este usuário</p>';
-                return;
-            }
-
-            const icones = {
-                'PCP': 'fas fa-chart-line',
-                'WMS': 'fas fa-warehouse',
-                'Avaria': 'fas fa-warehouse',
-                'Separação': 'fas fa-boxes',
-                'Gestão': 'fas fa-users-cog',
-                'QLP': 'fas fa-chart-bar',
-                'Mapa de Carga': 'fas fa-truck-loading',
-                'Alocação BOX': 'fas fa-warehouse',
-                'Coletores': 'fas fa-mobile-alt',
-                'Resumo equipamentos': 'fas fa-mobile-alt',
-                'Resumo de Colaboradores': 'fas fa-chart-pie',
-                'Resumo Base': 'fas fa-chart-pie',
-                'Painel de Presença': 'fas fa-clipboard-list',
-                'Produção': 'fas fa-calculator',
-                'Controle de Equipamentos': 'fas fa-barcode',
-                'Recebimento': 'fas fa-truck',
-                'Usuários': 'fas fa-user-shield',
-                'default': 'fas fa-building'
-            };
-            
-            areasSelecionadas.forEach(area => {
-                const card = document.createElement('div');
-                card.className = 'area-card';
-                card.onclick = () => selecionarArea(area, card);
-                
-                let icone = icones.default;
-                for (const key in icones) {
-                    if (area.toLowerCase().includes(key.toLowerCase())) {
-                        icone = icones[key];
-                        break;
-                    }
-                }
-                
-                card.innerHTML = `
-                    <i class="${icone}"></i>
-                    <h4>${area}</h4>
-                    <p>Clique para selecionar esta área</p>
-                `;
-                
-                grid.appendChild(card);
-            });
-        }
-
-        function selecionarArea(area, cardElement) {
-            document.querySelectorAll('.area-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            
-            cardElement.classList.add('selected');
-            areaSelecionada = area;
-            
-            sessionStorage.setItem('abaSelecionada', area);
-            
-            const abrirBtn = document.getElementById('abrirBtn');
-            abrirBtn.disabled = false;
-            
-            console.log('Área selecionada:', area);
-            
-            showStatus(`<i class="fas fa-check"></i> Área "${area}" selecionada`, 'success');
-            setTimeout(() => {
-                document.getElementById('menuStatus').innerHTML = '';
-            }, 2000);
-        }
-
+        // ===== Áreas → telas =====
         // Área (coluna "Aba" da aba Usuarios) → tela. A ordem importa: o primeiro termo que bater vale.
         const DESTINOS = [
             { termos: ['usuarios'],                                             url: '/usuarios' },
@@ -252,31 +318,271 @@
         ];
 
         function destinoDaArea(area) {
-            const a = String(area || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            const a = semAcento(area);
             const destino = DESTINOS.find(d => d.termos.some(t => a.includes(t)));
             // Demais áreas (ex.: "WMS TA") abrem o painel de presença daquela área
             return destino ? destino.url : '/painel';
         }
 
-        function abrirPainel() {
-            if (!areaSelecionada) {
-                showStatus('<i class="fas fa-exclamation-triangle"></i> Selecione uma área primeiro', 'warning');
+        const ICONES = [
+            ['usuarios', 'fa-user-shield'], ['recebimento', 'fa-truck'], ['agenda', 'fa-file-excel'],
+            ['resumo de colaboradores', 'fa-chart-pie'], ['resumo colaboradores', 'fa-chart-pie'], ['resumo base', 'fa-chart-pie'],
+            ['equipamentos', 'fa-barcode'], ['coletor', 'fa-barcode'], ['producao', 'fa-calculator'],
+            ['qlp', 'fa-chart-bar'], ['mapa de carga', 'fa-truck-loading'], ['alocacao box', 'fa-warehouse'],
+            ['avaria', 'fa-box-open'], ['presenca', 'fa-clipboard-list'], ['gestao', 'fa-users-cog'],
+            ['wms', 'fa-warehouse'], ['separacao', 'fa-boxes'], ['pcp', 'fa-chart-line'],
+        ];
+
+        function iconeDaArea(area) {
+            const a = semAcento(area);
+            const achado = ICONES.find(([t]) => a.includes(t));
+            return achado ? achado[1] : 'fa-building';
+        }
+
+        // ===== Barra lateral =====
+        function montarNavegacao() {
+            const nav = $('navAreas');
+            if (!areasSelecionadas.length) {
+                nav.innerHTML = '<p class="contador" style="padding:10px 12px">Nenhuma área liberada</p>';
                 return;
             }
-            
-            const abrirBtn = document.getElementById('abrirBtn');
-            abrirBtn.disabled = true;
-            abrirBtn.innerHTML = '<i class="fas fa-spinner loading"></i> Abrindo...';
-            
-            console.log('Redirecionando para área:', areaSelecionada);
-            
-            // Salva dados na sessão
+            nav.innerHTML =
+                `<button class="nav-item ativo" title="Dashboard"><i class="fas fa-gauge-high"></i><span>Dashboard</span></button>` +
+                areasSelecionadas.map(area =>
+                    `<button class="nav-item" data-area="${esc(area)}" title="${esc(area)}">
+                        <i class="fas ${iconeDaArea(area)}"></i><span>${esc(area)}</span>
+                    </button>`).join('');
+        }
+
+        $('navAreas').addEventListener('click', e => {
+            const item = e.target.closest('[data-area]');
+            if (!item) return;
+            const area = item.dataset.area;
             sessionStorage.setItem('usuario', usuarioLogado);
-            sessionStorage.setItem('abaSelecionada', areaSelecionada);
-            
-            setTimeout(() => {
-                window.location.href = destinoDaArea(areaSelecionada);
-            }, 500);
+            sessionStorage.setItem('abaSelecionada', area);
+            window.location.href = destinoDaArea(area);
+        });
+
+        const CHAVE_RECOLHIDO = 'menu-recolhido';
+        try { if (localStorage.getItem(CHAVE_RECOLHIDO) === '1') $('app').classList.add('recolhido'); } catch (e) { /* sem storage */ }
+
+        $('btnRecolher').addEventListener('click', () => {
+            const recolhido = $('app').classList.toggle('recolhido');
+            try { localStorage.setItem(CHAVE_RECOLHIDO, recolhido ? '1' : '0'); } catch (e) { /* sem storage */ }
+        });
+
+        $('btnMenuMobile').addEventListener('click', () => $('app').classList.add('mobile-aberto'));
+        $('fundoMobile').addEventListener('click', () => $('app').classList.remove('mobile-aberto'));
+
+        // ===== Dashboard gerencial =====
+        // Cada módulo aparece só para quem tem a área correspondente (Gestão vê todos)
+        const MODULOS = [
+            { id: 'colaboradores', titulo: 'Resumo de Colaboradores', sub: 'Presença de hoje', icone: 'fa-chart-pie', cor: 'primary', url: '/resumo-base',
+              termos: ['resumo de colaboradores', 'resumo colaboradores', 'resumo base', 'resumo presenca', 'resumo de presenca'], carregar: carregarColaboradores },
+            { id: 'qlp', titulo: 'QLP', sub: 'Quadro de colaboradores', icone: 'fa-chart-bar', cor: 'peach', url: '/qlp',
+              termos: ['qlp'], carregar: carregarQLP },
+            { id: 'equipamentos', titulo: 'Equipamentos', sub: 'Coletores e chaves', icone: 'fa-barcode', cor: 'blue', url: '/resumo-equipamentos',
+              termos: ['resumo equipamentos', 'resumo de equipamentos', 'painel equipamentos', 'controle de equipamentos', 'coletor', 'rfid'], carregar: carregarEquipamentos },
+            { id: 'avaria', titulo: 'Avaria', sub: 'Registros de hoje', icone: 'fa-box-open', cor: 'red', url: '/avaria',
+              termos: ['avaria'], carregar: carregarAvaria },
+            { id: 'recebimento', titulo: 'Recebimento', sub: 'Recebimentos de hoje', icone: 'fa-truck', cor: 'green', url: '/recebimento',
+              termos: ['recebimento', 'agenda do portal'], carregar: carregarRecebimento },
+        ];
+
+        function liberado(modulo) {
+            return areasSelecionadas.some(area => {
+                const a = semAcento(area);
+                return a.includes('gestao') || modulo.termos.some(t => a.includes(t));
+            });
+        }
+
+        function hojeBR() {
+            return new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Manaus' });
+        }
+
+        function kpi(valor, rotulo, cor = '') {
+            return `<div class="kpi ${cor}"><div class="v">${esc(valor)}</div><div class="r">${esc(rotulo)}</div></div>`;
+        }
+
+        function barra(partes) {
+            const total = partes.reduce((s, p) => s + p.valor, 0) || 1;
+            return `<div class="barra">${partes.map(p => `<span style="width:${(p.valor / total) * 100}%;background:${p.cor}"></span>`).join('')}</div>
+                <div class="legenda">${partes.map(p => `<span><i class="fas fa-circle" style="color:${p.cor}"></i>${esc(p.rotulo)}: ${p.valor}</span>`).join('')}</div>`;
+        }
+
+        function topLista(contagem, limite = 4) {
+            const itens = Object.entries(contagem).sort((a, b) => b[1] - a[1]).slice(0, limite);
+            if (!itens.length) return '';
+            return `<div class="lista-mini">${itens.map(([k, v]) => `<div><span>${esc(k || 'Sem informação')}</span><strong>${v}</strong></div>`).join('')}</div>`;
+        }
+
+        async function buscarJSON(url, body) {
+            const resp = await fetch(url, body ? {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            } : undefined);
+            const json = await resp.json();
+            if (!resp.ok || json.ok === false) throw new Error(json.msg || `HTTP ${resp.status}`);
+            return json;
+        }
+
+        async function carregarColaboradores() {
+            const r = await buscarJSON('/api/producao/resumo-base');
+            const g = r.resumoGeral || {};
+            const ausencias = (g.ausente || 0) + (g.atestado || 0) + (g.afastado || 0);
+            return `<div class="kpis">
+                    ${kpi(g.total || 0, 'Total')}
+                    ${kpi(g.presente || 0, `Presentes · ${g.percentualPresente || 0}%`, 'verde')}
+                    ${kpi(g.desvio || 0, 'Desvios', 'vermelho')}
+                </div>
+                ${barra([
+                    { rotulo: 'Presentes', valor: g.presente || 0, cor: '#9fd1b0' },
+                    { rotulo: 'Ausências', valor: ausencias, cor: '#ebb3b0' },
+                    { rotulo: 'Férias/Folga', valor: (g.ferias || 0) + (g.folga || 0), cor: '#efd28f' },
+                ])}`;
+        }
+
+        async function carregarQLP() {
+            const r = await buscarJSON('/api/qlp/quadro');
+            const e = r.estatisticas || {};
+            const porSecao = {};
+            Object.entries(e.porSecao || {}).forEach(([k, v]) => { porSecao[k] = typeof v === 'object' ? (v.total || 0) : v; });
+            return `<div class="kpis">
+                    ${kpi(e.total || 0, 'Quadro')}
+                    ${kpi(e.ativos || 0, 'Ativos', 'verde')}
+                    ${kpi(e.inativos || 0, 'Inativos', 'vermelho')}
+                </div>
+                ${topLista(porSecao)}`;
+        }
+
+        async function carregarEquipamentos() {
+            const [col, cha] = await Promise.all([
+                buscarJSON('/api/coletores?action=obterColetorStatus'),
+                buscarJSON('/api/coletores?action=obterChaveStatus'),
+            ]);
+            const resumo = mapa => {
+                const itens = Object.values(mapa || {});
+                return {
+                    uso: itens.filter(i => i.tipo === 'Retirada').length,
+                    problema: itens.filter(i => i.situacao && !String(i.situacao).toUpperCase().includes('OK')).length,
+                };
+            };
+            const c = resumo(col.statusMap), k = resumo(cha.statusMap);
+            return `<div class="kpis">
+                    ${kpi(c.uso, 'Coletores em uso', 'azul')}
+                    ${kpi(k.uso, 'Chaves em uso', 'ambar')}
+                    ${kpi(c.problema + k.problema, 'Com problema', 'vermelho')}
+                </div>`;
+        }
+
+        async function carregarAvaria() {
+            const r = await buscarJSON('/api/avaria', { action: 'obterHistorico' });
+            const hoje = hojeBR();
+            const deHoje = (r.dados || []).filter(d => String(d.dataHora || '').startsWith(hoje));
+            const porMotivo = {};
+            deHoje.forEach(d => { porMotivo[d.motivo] = (porMotivo[d.motivo] || 0) + 1; });
+            const qtd = deHoje.reduce((s, d) => s + (Number(d.quantidade) || 0), 0);
+            return `<div class="kpis">
+                    ${kpi(deHoje.length, 'Registros hoje', 'vermelho')}
+                    ${kpi(qtd, 'Unidades')}
+                    ${kpi(Object.keys(porMotivo).length, 'Motivos')}
+                </div>
+                ${topLista(porMotivo) || '<div class="carregando">Nenhuma avaria hoje</div>'}`;
+        }
+
+        async function carregarRecebimento() {
+            const r = await buscarJSON('/api/recebimento', { action: 'obterRecebimentos', filtros: {} });
+            const dados = r.dados || [];
+            const cont = etapa => dados.filter(d => d['Etapa'] === etapa).length;
+            return `<div class="kpis">
+                    ${kpi(cont('Aguardando início'), 'Aguardando', 'ambar')}
+                    ${kpi(cont('Em conferência'), 'Em conferência', 'azul')}
+                    ${kpi(cont('Finalizado'), 'Finalizados', 'verde')}
+                </div>
+                ${barra([
+                    { rotulo: 'Agendados', valor: dados.filter(d => d['Status Agenda'] === 'Agendado').length, cor: '#9fd1b0' },
+                    { rotulo: 'Sem agenda', valor: dados.filter(d => d['Status Agenda'] === 'Sem agenda').length, cor: '#efd28f' },
+                    { rotulo: 'Com divergência', valor: dados.filter(d => d['Divergência'] === 'Sim').length, cor: '#ebb3b0' },
+                ])}`;
+        }
+
+        const CORES_ICONE = {
+            primary: ['var(--primary-soft)', 'var(--primary-text)'], peach: ['var(--peach-soft)', 'var(--peach)'],
+            blue: ['var(--blue-soft)', 'var(--blue)'], red: ['var(--red-soft)', 'var(--red)'], green: ['var(--green-soft)', 'var(--green)'],
+        };
+
+        function carregarDashboard() {
+            $('dataHoje').textContent = new Date().toLocaleDateString('pt-BR', {
+                timeZone: 'America/Manaus', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+            });
+
+            const modulos = MODULOS.filter(liberado);
+            if (!modulos.length) {
+                $('dash').innerHTML = `<div class="vazio-dash"><i class="fas fa-compass"></i>
+                    Use o menu lateral para abrir as áreas liberadas para você.</div>`;
+                return;
+            }
+
+            $('dash').innerHTML = modulos.map(m => {
+                const [fundo, cor] = CORES_ICONE[m.cor];
+                return `<section class="modulo" id="mod-${m.id}">
+                    <div class="modulo-topo">
+                        <span class="modulo-icone" style="background:${fundo};color:${cor}"><i class="fas ${m.icone}"></i></span>
+                        <div><h2>${m.titulo}</h2><small>${m.sub}</small></div>
+                        <a href="${m.url}">Abrir <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="modulo-corpo"><div class="carregando"><i class="fas fa-spinner fa-spin"></i> Carregando...</div></div>
+                </section>`;
+            }).join('');
+
+            // Cada módulo carrega de forma independente: um erro não derruba os outros
+            modulos.forEach(async m => {
+                const corpo = document.querySelector(`#mod-${m.id} .modulo-corpo`);
+                try {
+                    corpo.innerHTML = await m.carregar();
+                } catch (e) {
+                    corpo.innerHTML = `<div class="erro-modulo"><i class="fas fa-exclamation-triangle"></i> Não foi possível carregar: ${esc(e.message)}</div>`;
+                }
+            });
+        }
+
+        // ===== Sessão =====
+        function carregarDadosUsuario() {
+            usuarioLogado = sessionStorage.getItem('usuario');
+            const abasString = sessionStorage.getItem('abas');
+
+            if (!usuarioLogado || !abasString) {
+                showStatus('<i class="fas fa-exclamation-triangle"></i> Sessão expirada. Redirecionando para login...', 'error');
+                setTimeout(() => { window.location.href = '/'; }, 2000);
+                return false;
+            }
+
+            try {
+                areasSelecionadas = JSON.parse(abasString);
+                $('userName').textContent = usuarioLogado;
+                return true;
+            } catch (error) {
+                showStatus('<i class="fas fa-exclamation-triangle"></i> Erro nos dados da sessão', 'error');
+                return false;
+            }
+        }
+
+        // Busca na planilha as áreas atuais do usuário (permissões alteradas depois do login)
+        async function atualizarAreas() {
+            const token = sessionStorage.getItem('token');
+            if (!token) return;
+            try {
+                const r = await buscarJSON('/api/auth', { action: 'minhasAreas', token });
+                if (!Array.isArray(r.abas) || !r.abas.length) return;
+                if (JSON.stringify(r.abas) === JSON.stringify(areasSelecionadas)) return;
+                areasSelecionadas = r.abas;
+                sessionStorage.setItem('abas', JSON.stringify(r.abas));
+                montarNavegacao();
+                carregarDashboard();
+            } catch (e) {
+                console.warn('Não foi possível atualizar as áreas:', e.message);
+            }
         }
 
         function sair() {
@@ -286,46 +592,11 @@
             }
         }
 
-        // Busca na planilha as áreas atuais do usuário (permissões alteradas depois do login)
-        async function atualizarAreas() {
-            const token = sessionStorage.getItem('token');
-            if (!token) return;
-            try {
-                const resp = await fetch('/api/auth', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'minhasAreas', token })
-                });
-                const r = await resp.json();
-                if (!r.ok || !Array.isArray(r.abas) || !r.abas.length) return;
-                if (JSON.stringify(r.abas) === JSON.stringify(areasSelecionadas)) return;
-                areasSelecionadas = r.abas;
-                sessionStorage.setItem('abas', JSON.stringify(r.abas));
-                criarCardsAreas();
-            } catch (e) {
-                console.warn('Não foi possível atualizar as áreas:', e.message);
-            }
+        if (carregarDadosUsuario()) {
+            montarNavegacao();
+            carregarDashboard();
+            atualizarAreas();
         }
-
-        window.onload = function() {
-            console.log('Menu carregando...');
-            
-            if (carregarDadosUsuario()) {
-                criarCardsAreas();
-                atualizarAreas();
-                showStatus('<i class="fas fa-check"></i> Menu carregado com sucesso', 'success');
-                setTimeout(() => {
-                    document.getElementById('menuStatus').innerHTML = '';
-                }, 2000);
-            }
-        };
-
-        console.log('Menu.html carregado');
-        console.log('SessionStorage atual:', {
-            usuario: sessionStorage.getItem('usuario'),
-            abas: sessionStorage.getItem('abas'),
-            abaSelecionada: sessionStorage.getItem('abaSelecionada')
-        });
     </script>
 </body>
 </html>

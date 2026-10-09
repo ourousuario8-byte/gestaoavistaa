@@ -316,7 +316,7 @@ async function add(matricula,nome,funcao){
     }
   }catch(error){
     console.error('Erro ao adicionar:',error);
-    showStatus('Erro ao adicionar colaborador','error');
+    showStatus(error.message || 'Erro ao adicionar colaborador','error');
     buttons.forEach(btn=>{
       btn.innerHTML='<i class="fas fa-plus"></i> Adicionar';
       btn.disabled=false;
