@@ -244,6 +244,7 @@
             <div class="campo-largo oculto" id="campoDivergencia">
               <label for="qualDivergencia">Qual divergência? <span class="obrig">*</span></label>
               <select id="qualDivergencia" multiple data-placeholder="Selecione a(s) divergência(s)"></select>
+              <div class="dica oculto" id="dicaDivergencia">Nenhuma divergência cadastrada: preencha a aba <strong>Divergência</strong> da planilha.</div>
             </div>
           </div>
           <div class="acoes">
@@ -513,6 +514,7 @@
         atualizarProblema();
         preencherSelect($('observacoes'), r.observacoes || [], { vazio: false });
         preencherSelect($('qualDivergencia'), r.divergencias || [], { vazio: false });
+        $('dicaDivergencia').classList.toggle('oculto', (r.divergencias || []).length > 0);
         preencherSelect($('conferente'), (r.conferentes || []).map(c => ({ valor: c.nome, texto: c.nome, extra: c.funcao })));
       } catch (e) {
         showStatus('statusChegada', `<i class="fas fa-exclamation-triangle"></i> Erro ao carregar listas: ${esc(e.message)}`, 'error');
