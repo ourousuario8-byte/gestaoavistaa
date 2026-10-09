@@ -494,6 +494,12 @@
         const r = await api({ action: 'obterOpcoes' });
         if (!r.ok) throw new Error(r.msg);
         opcoes = r;
+        if (r.avisoAbas) {
+          // Abas da planilha não puderam ser criadas: mostra o motivo
+          const aviso = `<i class="fas fa-exclamation-triangle"></i> Não foi possível criar as abas na planilha: ${esc(r.avisoAbas)}`;
+          showStatus('statusChegada', aviso, 'error');
+          showStatus('statusAgenda', aviso, 'error');
+        }
 
         const agendados = new Set((r.agendaDia || []).map(a => a.fornecedor.toLowerCase()));
         preencherSelect($('fornecedor'), [], {
