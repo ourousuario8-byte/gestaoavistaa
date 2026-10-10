@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="/js/fuso.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Correções</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="/css/tema.css" rel="stylesheet">
+  <style>
+    .abas { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+    .aba {
+      border: 1px solid var(--border); background: var(--surface); color: var(--text);
+      border-radius: 999px; padding: 9px 16px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .aba.ativa { background: var(--primary-soft); color: var(--primary-text); border-color: transparent; }
+    .painel-aba { display: none; }
+    .painel-aba.ativo { display: block; }
+    .barra { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+    .barra input[type="date"] { width: auto; }
+    .dica-topo { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+    td { vertical-align: middle; }
+    td input, td select { min-width: 120px; padding: 7px 9px; font-size: 13px; }
+    td .acoes-linha { display: flex; gap: 6px; }
+    .grade-correcao { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .grade-correcao .largo { grid-column: 1 / -1; }
+    @media (max-width: 520px) { .grade-correcao { grid-template-columns: 1fr; } }
+    .mudanca { white-space: normal; }
+    .mudanca .antes { color: var(--red); text-decoration: line-through; }
+    .mudanca .depois { color: var(--green); font-weight: 600; }
+    .bloqueio { text-align: center; padding: 50px 20px; }
+    .bloqueio > i { font-size: 38px; color: var(--red); margin-bottom: 12px; }
+    .oculto { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1><i class="fas fa-edit"></i> Correções</h1>
+        <p>Corrija os lançamentos que você fez. Toda correção fica registrada na aba Correções.</p>
+      </div>
+      <div class="nav">
+        <a href="/menu"><i class="fas fa-arrow-left"></i> Menu</a>
+      </div>
+    </div>
+
+    <div class="card oculto" id="bloqueio">
+      <div class="bloqueio">
+        <i class="fas fa-lock"></i>
+        <h2 style="justify-content:center" id="bloqueioMsg">Acesso restrito</h2>
+        <p class="contador">Peça a permissão <strong>Correções</strong> a quem gerencia os usuários.</p>
+      </div>
+    </div>
+
+    <div id="conteudo">
+      <div class="abas">
+        <button class="aba ativa" data-aba="recebimento"><i class="fas fa-truck"></i> Recebimento</button>
+        <button class="aba" data-aba="base"><i class="fas fa-clipboard-check"></i> Presença salva (Base)</button>
+        <button class="aba" data-aba="lista"><i class="fas fa-clipboard-list"></i> Lista de presença</button>
+        <button class="aba" data-aba="historico"><i class="fas fa-history"></i> Minhas correções</button>
+      </div>
+
+      <!-- ===== RECEBIMENTO ===== -->
+      <div class="card painel-aba ativo" id="aba-recebimento">
+        <p class="dica-topo">Recebimentos registrados por você.</p>
+        <div class="barra">
+          <input type="date" id="dataRec">
+          <button class="btn btn-secondary btn-sm" onclick="carregarRecebimentos()"><i class="fas fa-search"></i> Carregar</button>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>Data</th><th>Fornecedor</th><th>Notas</th><th>Etapa</th><th>Situação</th><th>Carga</th><th>Início</th><th>Fim</th><th></th></tr></thead>
+            <tbody id="tbodyRec"><tr><td colspan="9" class="vazio">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== BASE ===== -->
+      <div class="card painel-aba" id="aba-base">
+        <p class="dica-topo">Presenças que você salvou na Base. Ajuste status, desvio e função, ou exclua um lançamento errado.</p>
+        <div class="barra">
+          <input type="date" id="dataBase">
+          <button class="btn btn-secondary btn-sm" onclick="carregarBase()"><i class="fas fa-search"></i> Carregar</button>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>Matrícula</th><th>Nome</th><th>Grupo</th><th>Função</th><th>Status</th><th>Desvio</th><th></th></tr></thead>
+            <tbody id="tbodyBase"><tr><td colspan="7" class="vazio">Escolha a data e clique em Carregar</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== LISTA ===== -->
+      <div class="card painel-aba" id="aba-lista">
+        <p class="dica-topo">Colaboradores da sua lista de presença. Corrija nome e função.</p>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>Grupo</th><th>Matrícula</th><th>Nome</th><th>Função</th><th></th></tr></thead>
+            <tbody id="tbodyLista"><tr><td colspan="5" class="vazio">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== HISTÓRICO ===== -->
+      <div class="card painel-aba" id="aba-historico">
+        <p class="dica-topo">Últimas correções feitas por você (aba Correções da planilha).</p>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>Data</th><th>Tela</th><th>Registro</th><th>Campo</th><th>Antes → Depois</th></tr></thead>
+            <tbody id="tbodyHist"><tr><td colspan="5" class="vazio">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <!-- ===== Janela de correção do recebimento ===== -->
+  <div class="modal" id="modalRec">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-edit"></i> Corrigir recebimento</h3>
+        <button class="close-modal" type="button" data-fechar>&times;</button>
+      </div>
+      <form id="formRec" autocomplete="off">
+        <div class="modal-body">
+          <p class="contador" id="recInfo" style="margin-bottom:14px"></p>
+          <div class="grade-correcao">
+            <div class="largo"><label for="cFornecedor">Fornecedor *</label><input type="text" id="cFornecedor" list="dlFornecedores"><datalist id="dlFornecedores"></datalist></div>
+            <div class="largo"><label for="cNotas">Notas fiscais *</label><input type="text" id="cNotas" placeholder="Separadas por vírgula"></div>
+            <div><label for="cSituacao">Situação *</label><select id="cSituacao"></select></div>
+            <div><label for="cCarga">Carga</label><input type="text" id="cCarga"></div>
+            <div class="largo"><label for="cObservacao">Observação do problema</label><input type="text" id="cObservacao"></div>
+            <div><label for="cChegada">Hora chegada</label><input type="time" id="cChegada"></div>
+            <div><label for="cInicio">Hora início</label><input type="time" id="cInicio"></div>
+            <div><label for="cConferente">Conferente</label><input type="text" id="cConferente" list="dlConferentes"><datalist id="dlConferentes"></datalist></div>
+            <div><label for="cFim">Hora fim</label><input type="time" id="cFim"></div>
+            <div><label for="cDivergencia">Divergência</label><select id="cDivergencia"><option value=""></option><option>Não</option><option>Sim</option></select></div>
+            <div><label for="cQual">Qual divergência</label><input type="text" id="cQual" list="dlDivergencias"><datalist id="dlDivergencias"></datalist></div>
+          </div>
+          <div class="status" id="statusRec"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnSalvarRec"><i class="fas fa-save"></i> Salvar correção</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const usuario = sessionStorage.getItem('usuario') || '';
+    const STATUS = ['Presente', 'Ausente', 'Atestado', 'Afastado', 'Férias', 'Folga', 'Abandono'];
+
+    function esc(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function showStatus(msg, tipo, id = 'status') {
+      $(id).innerHTML = msg;
+      $(id).className = `status show ${tipo}`;
+    }
+
+    async function api(url, body) {
+      const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, usuario }) });
+      const r = await resp.json().catch(() => ({ ok: false, msg: `HTTP ${resp.status}` }));
+      if (Array.isArray(r)) return { ok: true, dados: r };
+      if (!resp.ok && r.ok !== false) r.ok = false;
+      return r;
+    }
+    const colab = body => api('/api/colaboradores', body);
+    const receb = body => api('/api/recebimento', body);
+
+    function bloquear(msg) {
+      $('conteudo').classList.add('oculto');
+      $('bloqueio').classList.remove('oculto');
+      $('bloqueioMsg').textContent = msg;
+    }
+
+    // Data local do aparelho em aaaa-mm-dd
+    function hojeISO() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    // ===== Abas =====
+    const carregadas = {};
+    document.querySelectorAll('[data-aba]').forEach(b => b.addEventListener('click', () => abrirAba(b.dataset.aba)));
+    function abrirAba(nome, recarregar = false) {
+      document.querySelectorAll('[data-aba]').forEach(b => b.classList.toggle('ativa', b.dataset.aba === nome));
+      document.querySelectorAll('.painel-aba').forEach(p => p.classList.toggle('ativo', p.id === `aba-${nome}`));
+      if (carregadas[nome] && !recarregar) return;
+      carregadas[nome] = true;
+      ({ recebimento: carregarRecebimentos, base: carregarBase, lista: carregarLista, historico: carregarHistorico })[nome]();
+    }
+
+    // ===== Recebimento =====
+    let recebimentos = [];
+    let opcoes = null;
+    let corrigindo = null;
+    const CAMPOS_REC = {
+      cFornecedor: 'Fornecedor', cNotas: 'Nota Fiscal', cSituacao: 'Situação', cCarga: 'Carga', cObservacao: 'Observação',
+      cChegada: 'Hora Chegada', cInicio: 'Hora Início', cConferente: 'Conferente', cFim: 'Hora Fim',
+      cDivergencia: 'Divergência', cQual: 'Qual Divergência',
+    };
+
+    async function carregarRecebimentos() {
+      const iso = $('dataRec').value;
+      const data = iso ? iso.split('-').reverse().join('/') : 'todas';
+      $('tbodyRec').innerHTML = '<tr><td colspan="9" class="vazio"><i class="fas fa-spinner fa-spin"></i> Carregando...</td></tr>';
+      const r = await receb({ action: 'obterRecebimentos', filtros: { data } });
+      if (!r.ok) { $('tbodyRec').innerHTML = `<tr><td colspan="9" class="vazio">${esc(r.msg)}</td></tr>`; return; }
+      // Só os registrados pelo usuário (registros antigos: último usuário)
+      recebimentos = (r.dados || []).filter(x => (x['Criado por'] || x['Usuário']) === usuario && (!iso || x['Data'] === data));
+      $('tbodyRec').innerHTML = recebimentos.length ? recebimentos.map(x => `
+        <tr>
+          <td>${esc(x['Data'])}</td>
+          <td>${esc(x['Fornecedor'])}</td>
+          <td>${esc(x['Nota Fiscal'])}</td>
+          <td><span class="badge badge-secondary">${esc(x['Etapa'])}</span></td>
+          <td>${esc(x['Situação'])}</td>
+          <td>${esc(x['Carga'])}</td>
+          <td>${esc(x['Hora Início'])}</td>
+          <td>${esc(x['Hora Fim'])}</td>
+          <td><button class="btn btn-secondary btn-sm" data-corrigir="${esc(x['ID'])}"><i class="fas fa-edit"></i> Corrigir</button></td>
+        </tr>`).join('') : '<tr><td colspan="9" class="vazio">Nenhum recebimento registrado por você nesta data</td></tr>';
+    }
+
+    $('tbodyRec').addEventListener('click', e => {
+      const b = e.target.closest('[data-corrigir]');
+      if (b) abrirCorrecaoRec(b.dataset.corrigir);
+    });
+
+    async function abrirCorrecaoRec(id) {
+      const x = recebimentos.find(r => r['ID'] === id);
+      if (!x) return;
+      if (!opcoes) {
+        const r = await receb({ action: 'obterOpcoes' });
+        opcoes = r.ok ? r : { situacoes: [], fornecedores: [], conferentes: [], divergencias: [] };
+      }
+      corrigindo = id;
+      const situacoes = (opcoes.situacoes || []).map(s => s.nome);
+      if (x['Situação'] && !situacoes.includes(x['Situação'])) situacoes.unshift(x['Situação']);
+      $('cSituacao').innerHTML = situacoes.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+      $('dlFornecedores').innerHTML = (opcoes.fornecedores || []).map(f => `<option value="${esc(f)}">`).join('');
+      $('dlConferentes').innerHTML = (opcoes.conferentes || []).map(c => `<option value="${esc(c.nome)}">`).join('');
+      $('dlDivergencias').innerHTML = (opcoes.divergencias || []).map(d => `<option value="${esc(d)}">`).join('');
+      Object.entries(CAMPOS_REC).forEach(([el, campo]) => { $(el).value = x[campo] || ''; });
+      $('recInfo').textContent = `${x['Data']} · ${x['Etapa']}` + (x['Corrigido em'] ? ` · corrigido em ${x['Corrigido em']}` : '');
+      $('statusRec').className = 'status';
+      $('modalRec').classList.add('active');
+    }
+
+    function fecharRec() { $('modalRec').classList.remove('active'); corrigindo = null; }
+    document.querySelectorAll('[data-fechar]').forEach(b => b.addEventListener('click', fecharRec));
+    $('modalRec').addEventListener('click', e => { if (e.target === $('modalRec')) fecharRec(); });
+
+    $('formRec').addEventListener('submit', async e => {
+      e.preventDefault();
+      const x = recebimentos.find(r => r['ID'] === corrigindo);
+      if (!x) return;
+      const campos = {};
+      Object.entries(CAMPOS_REC).forEach(([el, campo]) => {
+        const v = $(el).value.trim();
+        if (v !== String(x[campo] || '').trim()) campos[campo] = v;
+      });
+      if (!Object.keys(campos).length) return showStatus('Nada foi alterado.', 'info', 'statusRec');
+      const btn = $('btnSalvarRec');
+      btn.disabled = true;
+      try {
+        const r = await receb({ action: 'corrigirRecebimento', id: corrigindo, campos });
+        if (!r.ok) throw new Error(r.msg);
+        fecharRec();
+        showStatus('<i class="fas fa-check-circle"></i> Recebimento corrigido', 'success');
+        carregadas.historico = false;
+        carregarRecebimentos();
+      } catch (err) {
+        showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(err.message)}`, 'error', 'statusRec');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // ===== Presença salva (Base) =====
+    let base = [];
+
+    async function carregarBase() {
+      $('tbodyBase').innerHTML = '<tr><td colspan="7" class="vazio"><i class="fas fa-spinner fa-spin"></i> Carregando...</td></tr>';
+      const r = await colab({ action: 'minhaBase', data: $('dataBase').value });
+      if (!r.ok) {
+        if (/restrito|Sessão/.test(r.msg || '')) return bloquear(r.msg);
+        $('tbodyBase').innerHTML = `<tr><td colspan="7" class="vazio">${esc(r.msg)}</td></tr>`;
+        return;
+      }
+      base = r.registros || [];
+      $('tbodyBase').innerHTML = base.length ? base.map((x, i) => `
+        <tr>
+          <td><strong>${esc(x.matricula)}</strong></td>
+          <td>${esc(x.nome)}${x.corrigidoEm ? `<small class="contador" style="display:block">corrigido em ${esc(x.corrigidoEm)}</small>` : ''}</td>
+          <td>${esc(x.aba)}</td>
+          <td><input type="text" data-i="${i}" data-campo="funcao" value="${esc(x.funcao)}"></td>
+          <td><select data-i="${i}" data-campo="status">
+            ${['', ...STATUS, ...(x.status && !STATUS.includes(x.status) ? [x.status] : [])]
+              .map(o => `<option value="${esc(o)}" ${o === x.status ? 'selected' : ''}>${esc(o || '-- Selecione --')}</option>`).join('')}
+          </select></td>
+          <td><select data-i="${i}" data-campo="desvio">
+            <option value="" ${!x.desvio ? 'selected' : ''}>Sem desvio</option>
+            <option value="Desvio" ${x.desvio === 'Desvio' ? 'selected' : ''}>Desvio</option>
+          </select></td>
+          <td><div class="acoes-linha">
+            <button class="btn btn-success btn-sm" onclick="salvarBase(${i})"><i class="fas fa-check"></i> Salvar</button>
+            <button class="btn btn-danger btn-sm" onclick="excluirBase(${i})"><i class="fas fa-trash"></i> Excluir</button>
+          </div></td>
+        </tr>`).join('') : `<tr><td colspan="7" class="vazio">Nenhuma presença salva por você em ${esc(r.data)}</td></tr>`;
+    }
+
+    async function salvarBase(i) {
+      const x = base[i];
+      const campos = {};
+      document.querySelectorAll(`#tbodyBase [data-i="${i}"]`).forEach(el => {
+        if (el.value.trim() !== String(x[el.dataset.campo] || '')) campos[el.dataset.campo] = el.value.trim();
+      });
+      if (!Object.keys(campos).length) return showStatus('Nada foi alterado.', 'info');
+      const r = await colab({ action: 'corrigirBase', linha: x.linha, matricula: x.matricula, campos });
+      if (!r.ok) return showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(r.msg)}`, 'error');
+      showStatus(`<i class="fas fa-check-circle"></i> Presença de ${esc(x.nome)} corrigida`, 'success');
+      carregadas.historico = false;
+      carregarBase();
+    }
+
+    async function excluirBase(i) {
+      const x = base[i];
+      if (!confirm(`Excluir a presença de ${x.nome} da Base?`)) return;
+      const r = await colab({ action: 'excluirDaBase', linha: x.linha, matricula: x.matricula });
+      if (!r.ok) return showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(r.msg)}`, 'error');
+      showStatus(`<i class="fas fa-check-circle"></i> Presença de ${esc(x.nome)} excluída`, 'success');
+      carregadas.historico = false;
+      carregarBase();
+    }
+
+    // ===== Lista de presença =====
+    let lista = [];
+
+    async function carregarLista() {
+      const r = await colab({ action: 'minhaLista' });
+      if (!r.ok) {
+        if (/restrito|Sessão/.test(r.msg || '')) return bloquear(r.msg);
+        $('tbodyLista').innerHTML = `<tr><td colspan="5" class="vazio">${esc(r.msg)}</td></tr>`;
+        return;
+      }
+      lista = r.lista || [];
+      $('tbodyLista').innerHTML = lista.length ? lista.map((x, i) => `
+        <tr>
+          <td>${esc(x.grupo)}</td>
+          <td><strong>${esc(x.matricula)}</strong></td>
+          <td><input type="text" data-l="${i}" data-campo="nome" value="${esc(x.nome)}"></td>
+          <td><input type="text" data-l="${i}" data-campo="funcao" value="${esc(x.funcao)}"></td>
+          <td><button class="btn btn-success btn-sm" onclick="salvarLista(${i})"><i class="fas fa-check"></i> Salvar</button></td>
+        </tr>`).join('') : '<tr><td colspan="5" class="vazio">Sua lista de presença está vazia</td></tr>';
+    }
+
+    async function salvarLista(i) {
+      const x = lista[i];
+      const campos = {};
+      document.querySelectorAll(`#tbodyLista [data-l="${i}"]`).forEach(el => {
+        if (el.value.trim() !== String(x[el.dataset.campo] || '')) campos[el.dataset.campo] = el.value.trim();
+      });
+      if (!Object.keys(campos).length) return showStatus('Nada foi alterado.', 'info');
+      const r = await colab({ action: 'corrigirLista', matricula: x.matricula, campos });
+      if (!r.ok) return showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(r.msg)}`, 'error');
+      showStatus(`<i class="fas fa-check-circle"></i> ${esc(x.matricula)} corrigido na lista`, 'success');
+      carregadas.historico = false;
+      carregarLista();
+    }
+
+    // ===== Minhas correções =====
+    async function carregarHistorico() {
+      const r = await colab({ action: 'minhasCorrecoes' });
+      if (!r.ok) { $('tbodyHist').innerHTML = `<tr><td colspan="5" class="vazio">${esc(r.msg)}</td></tr>`; return; }
+      $('tbodyHist').innerHTML = (r.correcoes || []).length ? r.correcoes.map(c => `
+        <tr>
+          <td>${esc(c['Data'])}</td>
+          <td>${esc(c['Tela'])}</td>
+          <td>${esc(c['Registro'])}</td>
+          <td>${esc(c['Campo'])}</td>
+          <td class="mudanca"><span class="antes">${esc(c['Antes'] || '(vazio)')}</span> → <span class="depois">${esc(c['Depois'] || '(vazio)')}</span></td>
+        </tr>`).join('') : '<tr><td colspan="5" class="vazio">Nenhuma correção ainda</td></tr>';
+    }
+
+    // ===== Início =====
+    if (!sessionStorage.getItem('token')) {
+      window.location.href = '/';
+    } else {
+      $('dataRec').value = hojeISO();
+      $('dataBase').value = hojeISO();
+      $('dataRec').addEventListener('change', carregarRecebimentos);
+      $('dataBase').addEventListener('change', carregarBase);
+      // A permissão é conferida pelo servidor; a lista é a chamada mais leve para descobrir
+      colab({ action: 'minhaLista' }).then(r => {
+        if (!r.ok && /restrito|Sessão/.test(r.msg || '')) return bloquear(r.msg);
+        const aba = (location.hash || '').replace('#', '');
+        abrirAba(['recebimento', 'base', 'lista', 'historico'].includes(aba) ? aba : 'recebimento');
+      });
+    }
+  </script>
+</body>
+</html>

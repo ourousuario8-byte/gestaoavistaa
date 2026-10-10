@@ -87,9 +87,6 @@
 
     .modal-content .campo { margin-bottom: 14px; }
     .modal-content textarea { min-height: 90px; resize: vertical; }
-    .grade-correcao { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    .grade-correcao .largo { grid-column: 1 / -1; }
-    @media (max-width: 520px) { .grade-correcao { grid-template-columns: 1fr; } }
     .linha-finalizada td { background: var(--green-soft); }
     .finalizar-direto { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 14px; }
     .finalizar-direto h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
@@ -274,75 +271,6 @@
         </form>
       </div>
     </section>
-
-    <!-- ===== CORREÇÃO DE RECEBIMENTO (só quem registrou) ===== -->
-    <div class="modal" id="modalCorrecao">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3><i class="fas fa-edit"></i> Corrigir recebimento</h3>
-          <button class="close-modal" type="button" data-fechar-correcao>&times;</button>
-        </div>
-        <form id="formCorrecao" autocomplete="off">
-          <div class="modal-body">
-            <p class="contador" id="correcaoInfo" style="margin-bottom:14px"></p>
-            <div class="grade-correcao">
-              <div class="largo">
-                <label for="cFornecedor">Fornecedor <span class="obrig">*</span></label>
-                <input type="text" id="cFornecedor" list="listaFornecedoresCorrecao">
-                <datalist id="listaFornecedoresCorrecao"></datalist>
-              </div>
-              <div class="largo">
-                <label for="cNotas">Notas fiscais <span class="obrig">*</span></label>
-                <input type="text" id="cNotas" placeholder="Separadas por vírgula">
-              </div>
-              <div>
-                <label for="cSituacao">Situação <span class="obrig">*</span></label>
-                <select id="cSituacao"></select>
-              </div>
-              <div>
-                <label for="cCarga">Carga</label>
-                <input type="text" id="cCarga">
-              </div>
-              <div class="largo">
-                <label for="cObservacao">Observação do problema</label>
-                <input type="text" id="cObservacao">
-              </div>
-              <div>
-                <label for="cChegada">Hora chegada</label>
-                <input type="time" id="cChegada">
-              </div>
-              <div>
-                <label for="cInicio">Hora início</label>
-                <input type="time" id="cInicio">
-              </div>
-              <div>
-                <label for="cConferente">Conferente</label>
-                <input type="text" id="cConferente" list="listaConferentesCorrecao">
-                <datalist id="listaConferentesCorrecao"></datalist>
-              </div>
-              <div>
-                <label for="cFim">Hora fim</label>
-                <input type="time" id="cFim">
-              </div>
-              <div>
-                <label for="cDivergencia">Divergência</label>
-                <select id="cDivergencia"><option value=""></option><option>Não</option><option>Sim</option></select>
-              </div>
-              <div>
-                <label for="cQualDivergencia">Qual divergência</label>
-                <input type="text" id="cQualDivergencia" list="listaDivergenciasCorrecao">
-                <datalist id="listaDivergenciasCorrecao"></datalist>
-              </div>
-            </div>
-            <div class="status" id="statusCorrecao"></div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-fechar-correcao>Cancelar</button>
-            <button type="submit" class="btn btn-primary" id="btnSalvarCorrecao"><i class="fas fa-save"></i> Salvar correção</button>
-          </div>
-        </form>
-      </div>
-    </div>
 
     <!-- ===== EDIÇÃO DE LINHA DA AGENDA ===== -->
     <div class="modal" id="modalAgenda">
@@ -1006,9 +934,6 @@
           : r['Etapa'] === 'Em conferência'
             ? `<button class="btn btn-secondary btn-sm" data-ir="fim" data-id="${id}"><i class="fas fa-flag-checkered"></i> Finalizar</button>`
             : '';
-        // Só quem registrou pode corrigir (registros antigos: último usuário)
-        const corrigir = (r['Criado por'] || r['Usuário']) === usuario
-          ? `<button class="btn btn-secondary btn-sm" data-corrigir="${id}" title="Corrigir"><i class="fas fa-edit"></i> Corrigir</button>` : '';
         return `<tr>
           <td><span class="badge badge-etapa-${classeEtapa(r['Etapa'])}">${esc(r['Etapa'])}</span></td>
           <td class="quebra">${esc(r['Fornecedor'])}</td>
@@ -1025,7 +950,7 @@
           <td>${esc(r['Conferente'])}</td>
           <td>${esc(r['Hora Fim'])}</td>
           <td class="quebra">${r['Divergência'] === 'Sim' ? `<span class="badge badge-danger">Sim</span> ${esc(r['Qual Divergência'])}` : r['Divergência'] === 'Não' ? '<span class="contador">Não</span>' : ''}</td>
-          <td><div style="display:flex;gap:6px">${acao}${corrigir}</div></td>
+          <td>${acao}</td>
         </tr>`;
       }).join('') : '<tr><td class="vazio" colspan="12">Nenhum recebimento</td></tr>';
     }
@@ -1039,9 +964,6 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
-
-      const corr = e.target.closest('[data-corrigir]');
-      if (corr) return abrirCorrecao(corr.dataset.corrigir);
 
       // Edição do número da carga direto na tabela
       const editar = e.target.closest('[data-editar-carga]');
@@ -1068,66 +990,6 @@
         const r = await api({ action: 'atualizarCarga', id, carga });
         if (!r.ok) alert(r.msg);
         await carregarRecebimentos();
-      }
-    });
-
-    // ===== Correção pelo usuário que registrou =====
-    let corrigindo = null;
-    const CAMPOS_CORRECAO = {
-      cFornecedor: 'Fornecedor', cNotas: 'Nota Fiscal', cSituacao: 'Situação', cCarga: 'Carga', cObservacao: 'Observação',
-      cChegada: 'Hora Chegada', cInicio: 'Hora Início', cConferente: 'Conferente', cFim: 'Hora Fim',
-      cDivergencia: 'Divergência', cQualDivergencia: 'Qual Divergência',
-    };
-
-    function abrirCorrecao(id) {
-      const r = recebimentos.find(x => x['ID'] === id);
-      if (!r) return;
-      corrigindo = id;
-      const situacoes = (opcoes.situacoes || []).map(x => x.nome);
-      if (r['Situação'] && !situacoes.includes(r['Situação'])) situacoes.unshift(r['Situação']);
-      $('cSituacao').innerHTML = situacoes.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
-      $('listaFornecedoresCorrecao').innerHTML = (opcoes.fornecedores || []).map(f => `<option value="${esc(f)}">`).join('');
-      $('listaConferentesCorrecao').innerHTML = (opcoes.conferentes || []).map(c => `<option value="${esc(c.nome)}">`).join('');
-      $('listaDivergenciasCorrecao').innerHTML = (opcoes.divergencias || []).map(d => `<option value="${esc(d)}">`).join('');
-      Object.entries(CAMPOS_CORRECAO).forEach(([el, campo]) => { $(el).value = r[campo] || ''; });
-      $('correcaoInfo').textContent = `${r['Data']} · ${r['Etapa']} · registrado por ${r['Criado por'] || r['Usuário']}` +
-        (r['Corrigido em'] ? ` · corrigido em ${r['Corrigido em']}` : '');
-      limparStatus('statusCorrecao');
-      $('modalCorrecao').classList.add('active');
-    }
-
-    function fecharCorrecao() {
-      $('modalCorrecao').classList.remove('active');
-      corrigindo = null;
-    }
-    document.querySelectorAll('[data-fechar-correcao]').forEach(b => b.addEventListener('click', fecharCorrecao));
-    $('modalCorrecao').addEventListener('click', e => { if (e.target === $('modalCorrecao')) fecharCorrecao(); });
-
-    $('formCorrecao').addEventListener('submit', async e => {
-      e.preventDefault();
-      const r = recebimentos.find(x => x['ID'] === corrigindo);
-      if (!r) return;
-      // Envia só o que mudou
-      const campos = {};
-      Object.entries(CAMPOS_CORRECAO).forEach(([el, campo]) => {
-        const v = $(el).value.trim();
-        if (v !== String(r[campo] || '').trim()) campos[campo] = v;
-      });
-      if (!Object.keys(campos).length) return showStatus('statusCorrecao', 'Nada foi alterado.', 'info');
-
-      const btn = $('btnSalvarCorrecao');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
-      try {
-        const res = await api({ action: 'corrigirRecebimento', id: corrigindo, campos });
-        if (!res.ok) throw new Error(res.msg);
-        fecharCorrecao();
-        await carregarRecebimentos();
-      } catch (err) {
-        showStatus('statusCorrecao', `<i class="fas fa-exclamation-triangle"></i> ${esc(err.message)}`, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save"></i> Salvar correção';
       }
     });
 

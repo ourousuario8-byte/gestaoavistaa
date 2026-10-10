@@ -111,7 +111,7 @@ td select { padding: 8px 32px 8px 10px; font-size: 14px; min-width: 130px; }
 
 @media print {
   body { background: #fff; padding: 0; }
-  .toolbar, .actions-panel, #resultado, #secaoCorrecao { display: none !important; }
+  .toolbar, .actions-panel, #resultado { display: none !important; }
 }
 </style>
 </head>
@@ -152,40 +152,6 @@ td select { padding: 8px 32px 8px 10px; font-size: 14px; min-width: 130px; }
 <button class="btn-success" id="btnSalvar" onclick="salvarBuffer()"><i class="fas fa-save"></i> Salvar</button>
 <button class="btn-info" onclick="window.print()"><i class="fas fa-print"></i> Imprimir Lista</button>
 <span id="statusSalvar" class="status-message"></span>
-</div>
-</div>
-<div class="section" id="secaoCorrecao">
-<h3><i class="fas fa-edit"></i> Corrigir presença já salva</h3>
-<p style="color:var(--muted);font-size:13px;margin-bottom:10px">Ajuste ou exclua os registros que você salvou na Base (só os seus).</p>
-<div class="toolbar" style="margin-bottom:10px">
-<input type="date" id="dataCorrecao" style="max-width:200px">
-<button class="btn-secondary" onclick="carregarMinhaBase()"><i class="fas fa-search"></i> Carregar</button>
-<span id="statusCorrecao" class="status-message"></span>
-</div>
-<table id="tabelaCorrecao">
-<thead>
-<tr><th>Matrícula</th><th>Nome</th><th>Função</th><th>Status</th><th>Desvio</th><th>Ações</th></tr>
-</thead>
-<tbody><tr><td colspan="6" class="empty-state">Escolha a data e clique em Carregar</td></tr></tbody>
-</table>
-</div>
-<div id="modalLista" class="modal">
-<div class="modal-content">
-<div class="modal-header">
-<h3><i class="fas fa-user-edit"></i> Corrigir colaborador da lista</h3>
-<button class="close-modal" onclick="fecharCorrecaoLista()">×</button>
-</div>
-<div class="modal-body">
-<p id="listaMatricula" style="color:var(--muted);margin-bottom:12px"></p>
-<label for="listaNome">Nome</label>
-<input type="text" id="listaNome" style="width:100%;margin-bottom:12px">
-<label for="listaFuncao">Função</label>
-<input type="text" id="listaFuncao" style="width:100%">
-</div>
-<div class="modal-footer">
-<button class="btn-secondary" onclick="fecharCorrecaoLista()"><i class="fas fa-times"></i> Cancelar</button>
-<button class="btn-success" id="btnSalvarLista" onclick="salvarCorrecaoLista()"><i class="fas fa-check"></i> Salvar</button>
-</div>
 </div>
 </div>
 <div id="modalConfirm" class="modal">
@@ -478,9 +444,6 @@ function renderTabela(lista){
           </select>
         </td>
         <td>
-          <button class="btn-secondary" onclick="abrirCorrecaoLista('${c.matricula}')" title="Corrigir nome/função">
-            <i class="fas fa-edit"></i> Corrigir
-          </button>
           <button class="btn-danger" onclick="remover('${c.matricula}')" title="Remover colaborador">
             <i class="fas fa-trash"></i> Remover
           </button>
@@ -725,103 +688,6 @@ document.addEventListener('DOMContentLoaded',function(){
   });
 });
 
-// ===== Correções pelo próprio usuário (Lista e Base) =====
-const STATUS_OPCOES=['Presente','Ausente','Atestado','Afastado','Férias','Folga','Abandono'];
-let corrigindoLista=null;
-
-function escHtml(v){
-  return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-async function apiColab(body){
-  const resp=await fetch('/api/colaboradores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const r=await resp.json().catch(()=>({ok:false,msg:`HTTP ${resp.status}`}));
-  if(!resp.ok&&r.ok!==false)r.ok=false;
-  return r;
-}
-
-function abrirCorrecaoLista(matricula){
-  const c=bufferMemoria[matricula];
-  if(!c)return;
-  corrigindoLista=matricula;
-  document.getElementById('listaMatricula').textContent=`Matrícula ${matricula}`;
-  document.getElementById('listaNome').value=c.nome||'';
-  document.getElementById('listaFuncao').value=c.funcao||'';
-  document.getElementById('modalLista').classList.add('active');
-}
-
-function fecharCorrecaoLista(){
-  document.getElementById('modalLista').classList.remove('active');
-  corrigindoLista=null;
-}
-
-async function salvarCorrecaoLista(){
-  const c=bufferMemoria[corrigindoLista];
-  if(!c)return;
-  const nome=document.getElementById('listaNome').value.trim();
-  const funcao=document.getElementById('listaFuncao').value.trim();
-  const campos={};
-  if(nome!==c.nome)campos.nome=nome;
-  if(funcao!==(c.funcao||''))campos.funcao=funcao;
-  if(!Object.keys(campos).length){fecharCorrecaoLista();return;}
-  const r=await apiColab({action:'corrigirLista',matricula:corrigindoLista,campos});
-  if(!r.ok){showStatus(r.msg||'Erro ao corrigir','error');return;}
-  fecharCorrecaoLista();
-  showStatus('Lista corrigida','success');
-  atualizarTabela();
-}
-
-let minhaBase=[];
-
-async function carregarMinhaBase(){
-  const data=document.getElementById('dataCorrecao').value;
-  const tbody=document.querySelector('#tabelaCorrecao tbody');
-  tbody.innerHTML='<tr><td colspan="6" class="empty-state"><i class="fas fa-spinner loading-spinner"></i> Carregando...</td></tr>';
-  const r=await apiColab({action:'minhaBase',data});
-  if(!r.ok){tbody.innerHTML=`<tr><td colspan="6" class="empty-state">${escHtml(r.msg)}</td></tr>`;return;}
-  minhaBase=r.registros||[];
-  tbody.innerHTML=minhaBase.length?minhaBase.map((x,i)=>`
-    <tr>
-      <td><strong>${escHtml(x.matricula)}</strong></td>
-      <td>${escHtml(x.nome)}${x.corrigidoEm?`<small style="display:block;color:var(--muted)">corrigido em ${escHtml(x.corrigidoEm)}</small>`:''}</td>
-      <td><input type="text" data-campo="funcao" data-i="${i}" value="${escHtml(x.funcao)}" style="width:100%"></td>
-      <td><select data-campo="status" data-i="${i}" style="width:100%">
-        ${['',...STATUS_OPCOES].map(o=>`<option value="${o}" ${o===x.status?'selected':''}>${o||'-- Selecione --'}</option>`).join('')}
-        ${x.status&&!STATUS_OPCOES.includes(x.status)?`<option selected>${escHtml(x.status)}</option>`:''}
-      </select></td>
-      <td><select data-campo="desvio" data-i="${i}" style="width:100%">
-        <option value="" ${!x.desvio?'selected':''}>Sem Desvio</option>
-        <option value="Desvio" ${x.desvio==='Desvio'?'selected':''}>Desvio</option>
-      </select></td>
-      <td style="white-space:nowrap">
-        <button class="btn-success" onclick="salvarCorrecaoBase(${i})" title="Salvar correção"><i class="fas fa-check"></i> Salvar</button>
-        <button class="btn-danger" onclick="excluirDaBase(${i})" title="Excluir da Base"><i class="fas fa-trash"></i> Excluir</button>
-      </td>
-    </tr>`).join(''):`<tr><td colspan="6" class="empty-state">Nenhum registro seu na Base em ${escHtml(r.data)}</td></tr>`;
-}
-
-async function salvarCorrecaoBase(i){
-  const x=minhaBase[i];
-  const campos={};
-  document.querySelectorAll(`#tabelaCorrecao [data-i="${i}"]`).forEach(el=>{
-    if(el.value.trim()!==String(x[el.dataset.campo]||''))campos[el.dataset.campo]=el.value.trim();
-  });
-  if(!Object.keys(campos).length){showStatus('Nada foi alterado','info');return;}
-  const r=await apiColab({action:'corrigirBase',linha:x.linha,matricula:x.matricula,campos});
-  if(!r.ok){showStatus(r.msg||'Erro ao corrigir','error');return;}
-  showStatus(`Registro de ${x.nome} corrigido`,'success');
-  carregarMinhaBase();
-}
-
-async function excluirDaBase(i){
-  const x=minhaBase[i];
-  if(!confirm(`Excluir o registro de ${x.nome} da Base?`))return;
-  const r=await apiColab({action:'excluirDaBase',linha:x.linha,matricula:x.matricula});
-  if(!r.ok){showStatus(r.msg||'Erro ao excluir','error');return;}
-  showStatus(`Registro de ${x.nome} excluído`,'success');
-  carregarMinhaBase();
-}
-
 // Grupo e turno definidos pelo próprio usuário no seu Perfil (/perfil).
 // Sem grupo definido, continua usando a área escolhida no menu.
 async function carregarPerfil(){
@@ -849,8 +715,6 @@ window.onload=async function(){
     window.location.href='/';
     return;
   }
-  const hoje=new Date();
-  document.getElementById('dataCorrecao').value=`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
   await carregarPerfil();
   if(!aba){
     alert('Defina o grupo da sua lista de presença no seu Perfil.');

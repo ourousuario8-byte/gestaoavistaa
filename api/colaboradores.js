@@ -57,6 +57,12 @@ module.exports = async function handler(req, res) {
         case 'corrigirLista':
           return res.status(200).json(await sheetsService.corrigirLista(req.body));
 
+        case 'minhaLista':
+          return res.status(200).json(await sheetsService.minhaLista());
+
+        case 'minhasCorrecoes':
+          return res.status(200).json(await require('../lib/correcoes').minhasCorrecoes());
+
         case 'addBuffer': {
           const { supervisor, aba, colaborador } = req.body;
           
