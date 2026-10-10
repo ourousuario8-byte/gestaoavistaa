@@ -76,6 +76,15 @@
 
     .carga-cel { display: flex; align-items: center; gap: 6px; }
     .carga-cel input { width: 110px; padding: 6px 8px; font-size: 13px; }
+
+    .aviso small { display: block; margin-top: 4px; opacity: .9; }
+
+    .obs-agenda { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; white-space: normal; max-width: 260px; }
+    td.col-acao { width: 1%; }
+    .linha-com-obs td { background: #fffbf2; }
+
+    .modal-content .campo { margin-bottom: 14px; }
+    .modal-content textarea { min-height: 90px; resize: vertical; }
     .link-btn { background: none; border: none; color: var(--primary-text); cursor: pointer; font-size: 13px; padding: 4px; }
   </style>
 </head>
@@ -255,6 +264,37 @@
       </div>
     </section>
 
+    <!-- ===== EDIÇÃO DE LINHA DA AGENDA ===== -->
+    <div class="modal" id="modalAgenda">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3><i class="fas fa-pen"></i> Editar agenda</h3>
+          <button class="close-modal" type="button" data-fechar-modal>&times;</button>
+        </div>
+        <form id="formEditarAgenda" autocomplete="off">
+          <div class="modal-body">
+            <p class="contador" id="editarAgendaInfo" style="margin-bottom:14px"></p>
+            <div class="campo">
+              <label for="editarFornecedor">Fornecedor <span class="obrig">*</span></label>
+              <input type="text" id="editarFornecedor" list="listaFornecedoresAgenda">
+              <datalist id="listaFornecedoresAgenda"></datalist>
+              <div class="dica">Corrija o nome se o portal trouxe diferente do cadastro da aba Fornecedor.</div>
+            </div>
+            <div class="campo">
+              <label for="editarObservacao">Observação</label>
+              <textarea id="editarObservacao" placeholder="Ex.: chega com 2 carretas, descarga lateral..."></textarea>
+              <div class="dica">Vai para a coluna "Obs. Agenda" do recebimento desse fornecedor.</div>
+            </div>
+            <div class="status" id="statusEditarAgenda"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-fechar-modal>Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="btnSalvarAgenda"><i class="fas fa-save"></i> Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- ===== CONSOLIDADO ===== -->
     <div class="card" id="cardConsolidado">
       <div class="toolbar">
@@ -384,11 +424,21 @@
         ? tabelaAgenda.linhas.filter(l => l.some(c => String(c).toLowerCase().includes(filtro)))
         : tabelaAgenda.linhas;
 
+      // Na agenda salva (não na pré-visualização do arquivo) cada linha pode ser editada
+      const editavel = !!tabelaAgenda.numeros;
+      const idxObs = tabelaAgenda.headers.indexOf('Observação Agenda');
+      const colunas = tabelaAgenda.headers.length + (editavel ? 1 : 0);
+
       $('theadAgenda').innerHTML = tabelaAgenda.headers.length
-        ? '<tr>' + tabelaAgenda.headers.map(h => `<th>${esc(h)}</th>`).join('') + '</tr>' : '';
+        ? '<tr>' + (editavel ? '<th></th>' : '') + tabelaAgenda.headers.map(h => `<th>${esc(h)}</th>`).join('') + '</tr>' : '';
       $('tbodyAgenda').innerHTML = linhas.length
-        ? linhas.slice(0, 1000).map(l => '<tr>' + tabelaAgenda.headers.map((_, i) => `<td>${esc(l[i])}</td>`).join('') + '</tr>').join('')
-        : `<tr><td class="vazio" colspan="${tabelaAgenda.headers.length || 1}">Nenhum registro</td></tr>`;
+        ? linhas.slice(0, 1000).map(l => {
+            const num = editavel ? tabelaAgenda.numeros[tabelaAgenda.linhas.indexOf(l)] : null;
+            return `<tr${idxObs !== -1 && l[idxObs] ? ' class="linha-com-obs"' : ''}>` +
+              (editavel ? `<td class="col-acao"><button class="link-btn" data-editar-agenda="${num}" title="Editar fornecedor e observação"><i class="fas fa-pen"></i></button></td>` : '') +
+              tabelaAgenda.headers.map((_, i) => `<td>${esc(l[i])}</td>`).join('') + '</tr>';
+          }).join('')
+        : `<tr><td class="vazio" colspan="${colunas || 1}">Nenhum registro</td></tr>`;
       $('contadorAgenda').textContent = `${linhas.length} de ${tabelaAgenda.linhas.length} linha(s)`;
     }
 
@@ -398,7 +448,8 @@
       try {
         const r = await api({ action: 'obterAgenda' });
         if (!r.ok) throw new Error(r.msg);
-        tabelaAgenda = { headers: r.headers, linhas: r.linhas.slice().reverse() }; // mais recentes primeiro
+        // mais recentes primeiro (o nº da linha acompanha cada registro)
+        tabelaAgenda = { headers: r.headers, linhas: r.linhas.slice().reverse(), numeros: (r.numeros || []).slice().reverse() };
       } catch (e) {
         tabelaAgenda = { headers: [], linhas: [] };
         showStatus('statusAgenda', `<i class="fas fa-exclamation-triangle"></i> Erro ao carregar agenda: ${esc(e.message)}`, 'error');
@@ -489,6 +540,67 @@
     dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
     dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('over'); selecionarArquivo(e.dataTransfer.files[0]); });
 
+    // ===== Edição de linha da agenda =====
+    let linhaEditando = null;
+
+    function abrirEdicaoAgenda(numero) {
+      const pos = tabelaAgenda.numeros.indexOf(numero);
+      if (pos === -1) return;
+      const linha = tabelaAgenda.linhas[pos];
+      const h = tabelaAgenda.headers.map(x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase());
+      const idx = nome => h.indexOf(nome);
+      const idxForn = idx('fornecedor');
+      const idxObs = tabelaAgenda.headers.indexOf('Observação Agenda');
+      const info = [['ticket', 'Ticket'], ['n nota', 'NF'], ['data recebimento', 'Data'], ['hora recebimento', 'Hora']]
+        .map(([k, rot]) => { const i = h.findIndex(x => x === k || x.replace('º', '') === k); return i !== -1 && linha[i] ? `${rot}: ${linha[i]}` : ''; })
+        .filter(Boolean).join(' · ');
+
+      linhaEditando = numero;
+      $('editarAgendaInfo').textContent = info;
+      $('editarFornecedor').value = idxForn === -1 ? '' : linha[idxForn];
+      $('editarObservacao').value = idxObs === -1 ? '' : linha[idxObs];
+      $('listaFornecedoresAgenda').innerHTML = (opcoes.fornecedores || []).map(f => `<option value="${esc(f)}">`).join('');
+      limparStatus('statusEditarAgenda');
+      $('modalAgenda').classList.add('active');
+      $('editarObservacao').focus();
+    }
+
+    function fecharEdicaoAgenda() {
+      $('modalAgenda').classList.remove('active');
+      linhaEditando = null;
+    }
+
+    $('tbodyAgenda').addEventListener('click', e => {
+      const b = e.target.closest('[data-editar-agenda]');
+      if (b) abrirEdicaoAgenda(Number(b.dataset.editarAgenda));
+    });
+    document.querySelectorAll('[data-fechar-modal]').forEach(b => b.addEventListener('click', fecharEdicaoAgenda));
+    $('modalAgenda').addEventListener('click', e => { if (e.target === $('modalAgenda')) fecharEdicaoAgenda(); });
+
+    $('formEditarAgenda').addEventListener('submit', async e => {
+      e.preventDefault();
+      const fornecedor = $('editarFornecedor').value.trim();
+      if (!fornecedor) return showStatus('statusEditarAgenda', 'Informe o fornecedor.', 'error');
+
+      const btn = $('btnSalvarAgenda');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+      try {
+        const r = await api({ action: 'editarAgenda', linha: linhaEditando, fornecedor, observacao: $('editarObservacao').value.trim() });
+        if (!r.ok) throw new Error(r.msg);
+        fecharEdicaoAgenda();
+        showStatus('statusAgenda', `<i class="fas fa-check-circle"></i> ${esc(r.msg)}`, 'success');
+        await carregarAgenda();
+        carregarOpcoes();        // agendados do dia com o nome corrigido
+        carregarRecebimentos();  // consolidação com a observação
+      } catch (err) {
+        showStatus('statusEditarAgenda', `<i class="fas fa-exclamation-triangle"></i> ${esc(err.message)}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Salvar';
+      }
+    });
+
     // ===== Listas das abas =====
     async function carregarOpcoes() {
       try {
@@ -556,7 +668,8 @@
             }).join('') +
             (ag.notas.length > 1 ? '<button type="button" class="chip-btn" data-nf="*">Adicionar todas</button>' : '')
           : '';
-        $('avisoAgenda').innerHTML = `<i class="fas fa-calendar-check"></i> <strong>Agendado</strong> para hoje${ag.hora ? ' às ' + esc(ag.hora) : ''}`;
+        $('avisoAgenda').innerHTML = `<i class="fas fa-calendar-check"></i> <strong>Agendado</strong> para hoje${ag.hora ? ' às ' + esc(ag.hora) : ''}` +
+          (ag.obs ? `<small><i class="fas fa-comment"></i> ${esc(ag.obs)}</small>` : '');
         $('avisoAgenda').className = 'aviso show ok';
       } else {
         $('sugestoesNF').innerHTML = '';
@@ -724,7 +837,8 @@
           <td><span class="badge badge-etapa-${classeEtapa(r['Etapa'])}">${esc(r['Etapa'])}</span></td>
           <td class="quebra">${esc(r['Fornecedor'])}</td>
           <td class="quebra">${esc(r['Nota Fiscal'])}</td>
-          <td><span class="badge ${r['Status Agenda'] === 'Agendado' ? 'badge-ok' : 'badge-sem'}">${esc(r['Status Agenda'])}</span></td>
+          <td><span class="badge ${r['Status Agenda'] === 'Agendado' ? 'badge-ok' : 'badge-sem'}">${esc(r['Status Agenda'])}</span>
+            ${r['Obs. Agenda'] ? `<span class="obs-agenda"><i class="fas fa-comment"></i> ${esc(r['Obs. Agenda'])}</span>` : ''}</td>
           <td>${esc(r['Hora Chegada'])}</td>
           <td class="quebra">${r['Situação']
             ? `<span class="badge ${r['Problema'] === 'Sim' ? 'badge-sem' : 'badge-ok'}">${esc(r['Situação'])}</span> ${esc(r['Observação'])}`

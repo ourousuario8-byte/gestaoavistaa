@@ -1,7 +1,7 @@
 const sheetsRecebimento = require('../lib/sheets_recebimento');
 
 const ACOES = [
-  'obterOpcoes', 'obterAgenda', 'importarAgenda', 'verificarAgenda',
+  'obterOpcoes', 'obterAgenda', 'importarAgenda', 'editarAgenda', 'verificarAgenda',
   'registrarChegada', 'registrarInicio', 'registrarFim', 'atualizarCarga',
   'obterRecebimentos', 'criarAbas', 'testarConexao',
 ];
@@ -32,6 +32,9 @@ module.exports = async function handler(req, res) {
         }
         return res.status(200).json(await sheetsRecebimento.importarAgenda(headers, linhas));
       }
+
+      case 'editarAgenda':
+        return res.status(200).json(await sheetsRecebimento.editarAgenda(req.body || {}));
 
       case 'verificarAgenda': {
         const { fornecedor, notaFiscal } = req.body || {};
