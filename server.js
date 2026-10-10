@@ -9,10 +9,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Fuso-Horario');
   if (req.method === 'OPTIONS') return res.status(200).end();
   next();
 });
+
+// Datas/horas gravadas seguem o fuso de quem fez a ação
+const { comFuso } = require('./lib/fuso');
+app.use('/api', (req, res, next) => comFuso(req, next));
 
 // Rotas da API
 app.use('/api/auth',         require('./api/auth'));

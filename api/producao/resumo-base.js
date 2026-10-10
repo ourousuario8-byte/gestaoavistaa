@@ -1,5 +1,6 @@
 // api/producao/resumo-base.js - VERSÃO UNIFICADA COMPLETA
 const sheetsService = require('../../lib/sheets');
+const { fusoAtual } = require('../../lib/fuso');
 
 // Data no formato "dd/mm/aaaa", aceitando "d/m/aaaa", "aaaa-mm-dd" e data com hora
 function normalizarData(valor) {
@@ -13,7 +14,7 @@ function normalizarData(valor) {
 
 // Hoje no fuso de Manaus (o servidor roda em UTC)
 function hojeManaus() {
-  return new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Manaus' });
+  return new Date().toLocaleDateString('pt-BR', { timeZone: fusoAtual() });
 }
 
 module.exports = async function handler(req, res) {

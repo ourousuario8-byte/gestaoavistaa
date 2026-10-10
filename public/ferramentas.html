@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <script src="/js/fuso.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ferramentas - Gestão a Vista</title>
@@ -167,11 +168,11 @@
             
             <!-- Dashboard QLP -->
             <div class="tool-card" onclick="abrirFerramenta('qlp')">
-                <span class="badge badge-popular">Dashboard</span>
+                <span class="badge badge-popular">QLP</span>
                 <div class="tool-icon">
                     <i class="fas fa-chart-bar"></i>
                 </div>
-                <h3>Dashboard QLP</h3>
+                <h3>QLP</h3>
                 <p>Visualização completa do quadro de colaboradores com estatísticas e análises detalhadas.</p>
                 <ul class="tool-features">
                     <li><i class="fas fa-check"></i> Visualização de todos os colaboradores</li>
@@ -179,7 +180,7 @@
                     <li><i class="fas fa-check"></i> Análises por Seção e Função</li>
                 </ul>
                 <button class="btn btn-primary">
-                    <i class="fas fa-arrow-right"></i> Abrir Dashboard
+                    <i class="fas fa-arrow-right"></i> Abrir QLP
                 </button>
             </div>
             
@@ -417,7 +418,7 @@
             
             const mensagens = {
                 'painel': 'Abrindo Painel de Presença...',
-                'qlp': 'Abrindo Dashboard QLP...',
+                'qlp': 'Abrindo QLP...',
                 'producao': 'Abrindo Calculadora de Produção...',
                 'resumo-base': 'Abrindo Resumo Base...',
                 'mapacarga': 'Abrindo Mapa de Carga...',
@@ -430,7 +431,7 @@
 
             const nomesFerramenta = {
                 'painel': 'Painel de Presença',
-                'qlp': 'Dashboard QLP',
+                'qlp': 'QLP',
                 'producao': 'Calculadora de Produção',
                 'resumo-base': 'Resumo Base',
                 'mapacarga': 'Mapa de Carga',

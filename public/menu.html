@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <script src="/js/fuso.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu - Gestão a Vista</title>
@@ -261,7 +262,7 @@
             <nav class="nav-lista" id="navAreas"></nav>
 
             <div class="lateral-rodape">
-                <a class="nav-item" href="/perfil" title="Meu usuário"><i class="fas fa-user-cog"></i><span>Meu usuário</span></a>
+                <a class="nav-item" href="/perfil" title="Perfil"><i class="fas fa-user-cog"></i><span>Perfil</span></a>
                 <button class="nav-item" onclick="sair()"><i class="fas fa-sign-out-alt"></i><span>Sair</span></button>
             </div>
         </aside>
@@ -271,7 +272,7 @@
             <div class="topo">
                 <button class="btn btn-secondary btn-menu-mobile" id="btnMenuMobile" title="Menu"><i class="fas fa-bars"></i></button>
                 <div>
-                    <h1>Dashboard gerencial</h1>
+                    <h1>Painel de bordo</h1>
                     <p id="dataHoje">-</p>
                 </div>
                 <div class="acoes-topo">
@@ -351,7 +352,7 @@
                 return;
             }
             nav.innerHTML =
-                `<button class="nav-item ativo" title="Dashboard"><i class="fas fa-gauge-high"></i><span>Dashboard</span></button>` +
+                `<button class="nav-item ativo" title="Painel de bordo"><i class="fas fa-gauge-high"></i><span>Painel de bordo</span></button>` +
                 areasSelecionadas.map(area =>
                     `<button class="nav-item" data-area="${esc(area)}" title="${esc(area)}">
                         <i class="fas ${iconeDaArea(area)}"></i><span>${esc(area)}</span>
@@ -402,7 +403,7 @@
         }
 
         function hojeBR() {
-            return new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Manaus' });
+            return new Date().toLocaleDateString('pt-BR');
         }
 
         function kpi(valor, rotulo, cor = '') {
@@ -519,7 +520,7 @@
 
         function carregarDashboard() {
             $('dataHoje').textContent = new Date().toLocaleDateString('pt-BR', {
-                timeZone: 'America/Manaus', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+                weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
             });
 
             const modulos = MODULOS.filter(liberado);

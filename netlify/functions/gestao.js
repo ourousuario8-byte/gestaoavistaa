@@ -14,6 +14,7 @@ const qlpQuadroHandler = require('../../api/qlp/quadro');
 const qlpPainelHandler = require('../../api/qlp/painel');
 const recebimentoHandler = require('../../api/recebimento');
 const usuariosHandler = require('../../api/usuarios');
+const { comFuso } = require('../../lib/fuso');
 
 function buildReq(event) {
   const body = event.body
@@ -51,7 +52,7 @@ exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Fuso-Horario',
   };
 
   if (event.httpMethod === 'OPTIONS') {
@@ -62,6 +63,11 @@ exports.handler = async (event) => {
   const req = buildReq(event);
   const res = buildRes();
 
+  // Datas/horas gravadas seguem o fuso de quem fez a ação
+  return comFuso(req, () => rotear(path, req, res, headers));
+};
+
+async function rotear(path, req, res, headers) {
   try {
     if (path === '/auth' || path === '/auth/') {
       await authHandler(req, res);
@@ -104,4 +110,4 @@ exports.handler = async (event) => {
       body: JSON.stringify({ ok: false, msg: 'Erro interno: ' + err.message }),
     };
   }
-};
+}

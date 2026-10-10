@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <script src="/js/fuso.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resumo Base - Análise de Presença</title>
@@ -978,7 +979,7 @@
             }
 
             // ===== CORREÇÃO: Define data de hoje no input =====
-            const [dia, mes, ano] = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Manaus' }).split('/');
+            const [dia, mes, ano] = new Date().toLocaleDateString('pt-BR').split('/');
             const dataHoje = `${ano}-${mes}-${dia}`; // formato exigido pelo campo de data
             
             document.getElementById('filtroData').value = dataHoje;
