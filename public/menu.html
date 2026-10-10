@@ -308,6 +308,7 @@
         // Área (coluna "Aba" da aba Usuarios) → tela. A ordem importa: o primeiro termo que bater vale.
         const DESTINOS = [
             { termos: ['usuarios'],                                             url: '/usuarios' },
+            { termos: ['correcoes'],                                            url: '/correcoes' },
             { termos: ['agenda do portal'],                                     url: '/recebimento#agenda' },
             { termos: ['recebimento'],                                          url: '/recebimento' },
             { termos: ['resumo de colaboradores', 'resumo colaboradores', 'resumo base', 'resumo presenca', 'resumo de presenca'], url: '/resumo-base' },
@@ -331,7 +332,7 @@
         }
 
         const ICONES = [
-            ['importar qlp', 'fa-file-upload'],
+            ['importar qlp', 'fa-file-upload'], ['correcoes', 'fa-edit'],
             ['usuarios', 'fa-user-shield'], ['recebimento', 'fa-truck'], ['agenda', 'fa-file-excel'],
             ['resumo de colaboradores', 'fa-chart-pie'], ['resumo colaboradores', 'fa-chart-pie'], ['resumo base', 'fa-chart-pie'],
             ['equipamentos', 'fa-barcode'], ['coletor', 'fa-barcode'], ['producao', 'fa-calculator'],
