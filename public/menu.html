@@ -175,10 +175,12 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
             padding: 12px;
+            min-width: 0;
+            overflow: hidden;
         }
 
-        .kpi .v { font-size: clamp(20px, 2.4vw, 26px); font-weight: 700; line-height: 1.1; }
-        .kpi .r { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-top: 4px; }
+        .kpi .v { font-size: clamp(18px, 2.4vw, 26px); font-weight: 700; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .kpi .r { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .02em; margin-top: 4px; line-height: 1.25; overflow-wrap: anywhere; hyphens: auto; }
         .kpi.verde .v { color: var(--green); }
         .kpi.vermelho .v { color: var(--red); }
         .kpi.ambar .v { color: var(--amber); }
@@ -450,9 +452,9 @@
             const porDepto = {};
             Object.entries(e.porDepartamento || {}).forEach(([k, v]) => { porDepto[k] = v.ativos || 0; });
             return `<div class="kpis">
-                    ${kpi(e.ativos || 0, `Ativos de ${e.total || 0}`, 'verde')}
-                    ${kpi(`${e.absenteismo || 0}%`, 'Absenteísmo 30d', 'ambar')}
-                    ${kpi(`${e.taxaAbandono || 0}%`, `Abandono · ${e.emAbandono || 0}`, 'vermelho')}
+                    ${kpi(e.ativos || 0, `Ativos / ${e.total || 0}`, 'verde')}
+                    ${kpi(`${e.absenteismo || 0}%`, 'Absent. 30d', 'ambar')}
+                    ${kpi(`${e.taxaAbandono || 0}%`, `Abandono (${e.emAbandono || 0})`, 'vermelho')}
                 </div>
                 ${topLista(porDepto)}`;
         }

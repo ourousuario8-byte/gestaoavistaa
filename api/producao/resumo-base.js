@@ -1,6 +1,21 @@
 // api/producao/resumo-base.js - VERSÃO UNIFICADA COMPLETA
 const sheetsService = require('../../lib/sheets');
 
+// Data no formato "dd/mm/aaaa", aceitando "d/m/aaaa", "aaaa-mm-dd" e data com hora
+function normalizarData(valor) {
+  const t = String(valor || '').trim();
+  let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return `${m[3].padStart(2, '0')}/${m[2].padStart(2, '0')}/${m[1]}`;
+  m = t.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
+  if (m) return `${m[1].padStart(2, '0')}/${m[2].padStart(2, '0')}/${m[3]}`;
+  return t;
+}
+
+// Hoje no fuso de Manaus (o servidor roda em UTC)
+function hojeManaus() {
+  return new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Manaus' });
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -57,20 +72,10 @@ module.exports = async function handler(req, res) {
     // ===== CORREÇÃO DA DATA =====
     let dataFiltro;
     
-    if (req.query.data) {
-      // Se veio data do frontend (formato YYYY-MM-DD)
-      const [dia, mes, ano] = req.query.data.split('-');
-      dataFiltro = `${ano}/${mes}/${dia}`;
-      console.log(`[RESUMO-BASE] Data do query: ${req.query.data} -> ${dataFiltro}`);
-    } else {
-      // Usa data de hoje
-      const hoje = new Date();
-      const dia = String(hoje.getDate()).padStart(2, '0');
-      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-      const ano = hoje.getFullYear();
-      dataFiltro = `${dia}/${mes}/${ano}`;
-      console.log(`[RESUMO-BASE] Data de hoje: ${dataFiltro}`);
-    }
+    // Data do frontend (aaaa-mm-dd) ou hoje em Manaus
+    dataFiltro = normalizarData(req.query.data) || hojeManaus();
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dataFiltro)) dataFiltro = hojeManaus();
+    console.log(`[RESUMO-BASE] Data: ${req.query.data || '(hoje)'} -> ${dataFiltro}`);
     
     console.log(`[RESUMO-BASE] Filtrando por data: "${dataFiltro}"`);
     
@@ -89,7 +94,7 @@ module.exports = async function handler(req, res) {
         const nome = String(row.get('Nome') || '').trim();
         const funcao = String(row.get('Função') || '').trim();
         const status = String(row.get('Status') || '').trim();
-        const data = String(row.get('Data') || '').trim();
+        const data = normalizarData(row.get('Data'));
         
         // Debug das primeiras 5 datas
         if (index < 5) {
@@ -178,7 +183,7 @@ module.exports = async function handler(req, res) {
     
     // Processa cada registro
     rowsBase.forEach((row, index) => {
-      const dataRegistro = String(row.get('Data') || '').trim();
+      const dataRegistro = normalizarData(row.get('Data'));
       
       // Debug das primeiras 5 datas
       if (index < 5) {
