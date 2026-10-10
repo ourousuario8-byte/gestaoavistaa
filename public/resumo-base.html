@@ -426,8 +426,35 @@
             }, 5000);
         }
 
+        const HTML_CARREGANDO = `
+            <i class="fas fa-spinner fa-spin"></i>
+            <p style="margin-top: 20px; font-size: 18px;">Carregando resumo...</p>`;
+        let requisicaoAtual = 0;
+
+        // Busca com uma nova tentativa automática (planilha às vezes demora ou falha na 1ª chamada)
+        async function buscarResumo(url) {
+            let ultimoErro;
+            for (let tentativa = 1; tentativa <= 2; tentativa++) {
+                try {
+                    const response = await fetch(url, { cache: 'no-store' });
+                    const texto = await response.text();
+                    let result;
+                    try { result = JSON.parse(texto); }
+                    catch (e) { throw new Error(`Resposta inválida do servidor (HTTP ${response.status})`); }
+                    if (!result.ok) throw new Error(result.msg || 'Erro ao carregar resumo');
+                    return result;
+                } catch (e) {
+                    ultimoErro = e;
+                    if (tentativa === 1) await new Promise(r => setTimeout(r, 1500));
+                }
+            }
+            throw ultimoErro;
+        }
+
         async function carregarResumo() {
+            const minhaRequisicao = ++requisicaoAtual;
             try {
+                document.getElementById('loadingDiv').innerHTML = HTML_CARREGANDO;
                 document.getElementById('loadingDiv').style.display = 'block';
                 document.getElementById('contentDiv').style.display = 'none';
 
@@ -445,14 +472,11 @@
 
                 console.log('[RESUMO] URL final:', url);
 
-                const response = await fetch(url);
-                const result = await response.json();
+                const result = await buscarResumo(url);
+                // Outra data foi escolhida enquanto esta carregava: descarta
+                if (minhaRequisicao !== requisicaoAtual) return;
 
                 console.log('[RESUMO] Resposta recebida:', result);
-
-                if (!result.ok) {
-                    throw new Error(result.msg || 'Erro ao carregar resumo');
-                }
 
                 // Mostra informações de debug
                 if (result.debug) {
@@ -475,6 +499,7 @@
                 showStatus(msg, 'success');
 
             } catch (error) {
+                if (minhaRequisicao !== requisicaoAtual) return;
                 console.error('[RESUMO] Erro:', error);
                 document.getElementById('loadingDiv').innerHTML = `
                     <i class="fas fa-exclamation-triangle" style="color: var(--red);"></i>
@@ -953,11 +978,8 @@
             }
 
             // ===== CORREÇÃO: Define data de hoje no input =====
-            const hoje = new Date();
-            const ano = hoje.getFullYear();
-            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-            const dia = String(hoje.getDate()).padStart(2, '0');
-            const dataHoje = `${dia}-${mes}-${ano}`;
+            const [dia, mes, ano] = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Manaus' }).split('/');
+            const dataHoje = `${ano}-${mes}-${dia}`; // formato exigido pelo campo de data
             
             document.getElementById('filtroData').value = dataHoje;
             console.log('[RESUMO] Data inicial definida:', dataHoje);
