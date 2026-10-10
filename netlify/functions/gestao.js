@@ -52,7 +52,7 @@ exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Fuso-Horario',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Fuso-Horario, X-Token',
   };
 
   if (event.httpMethod === 'OPTIONS') {

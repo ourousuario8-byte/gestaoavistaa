@@ -347,15 +347,19 @@
         }
 
         // ===== Barra lateral =====
+        // Permissões que não são telas (não aparecem na barra lateral)
+        const SO_PERMISSAO = ['todos os setores'];
+
         function montarNavegacao() {
             const nav = $('navAreas');
-            if (!areasSelecionadas.length) {
+            const areasTela = areasSelecionadas.filter(a => !SO_PERMISSAO.includes(semAcento(a)));
+            if (!areasTela.length) {
                 nav.innerHTML = '<p class="contador" style="padding:10px 12px">Nenhuma área liberada</p>';
                 return;
             }
             nav.innerHTML =
                 `<button class="nav-item ativo" title="Painel de bordo"><i class="fas fa-gauge-high"></i><span>Painel de bordo</span></button>` +
-                areasSelecionadas.map(area =>
+                areasTela.map(area =>
                     `<button class="nav-item" data-area="${esc(area)}" title="${esc(area)}">
                         <i class="fas ${iconeDaArea(area)}"></i><span>${esc(area)}</span>
                     </button>`).join('');
