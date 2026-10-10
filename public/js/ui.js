@@ -187,9 +187,11 @@
   // ===== Painéis de filtro recolhíveis =====
   // Qualquer painel de filtros ganha um botão "Filtros" que abre/fecha o painel.
   const SELETOR_FILTROS = '.filtros, .filters, .filters-panel, .filter-panel, [data-filtros]';
+  const paineisFiltro = new Set();
 
   function filtrosAtivos(painel) {
-    let qtd = 0;
+    // Botões de atalho ligados também contam como filtro
+    let qtd = painel.querySelectorAll('.atalho.ativo, [data-filtro-ativo]').length;
     painel.querySelectorAll('select').forEach(s => {
       if ([...s.selectedOptions].some(o => o.value && !o.defaultSelected)) qtd++;
     });
@@ -202,8 +204,12 @@
   function montarFiltro(painel) {
     if (painel._filtro) return;
     const chave = 'filtros-abertos:' + location.pathname;
-    let aberto = false;
-    try { aberto = localStorage.getItem(chave) === '1'; } catch (e) { /* sem storage */ }
+    // Fechado por padrão; com data-filtros-aberto começa aberto. A escolha do usuário fica salva.
+    let aberto = painel.hasAttribute('data-filtros-aberto');
+    try {
+      const salvo = localStorage.getItem(chave);
+      if (salvo !== null) aberto = salvo === '1';
+    } catch (e) { /* sem storage */ }
 
     const barra = document.createElement('div');
     barra.className = 'barra-filtro';
@@ -236,6 +242,7 @@
     painel.addEventListener('input', contar);
     painel.addEventListener('click', () => setTimeout(contar, 0));
     painel._filtro = { contar };
+    paineisFiltro.add(painel);
     aplicarEstado();
     contar();
   }
@@ -247,7 +254,12 @@
     raiz.querySelectorAll(SELETOR_FILTROS).forEach(montarFiltro);
   }
 
-  window.UI = { aplicar, atualizar: s => s._dd && s._dd.render() };
+  window.UI = {
+    aplicar,
+    atualizar: s => s._dd && s._dd.render(),
+    // Telas que mudam filtros pelo código chamam isto para atualizar o contador
+    contarFiltros: () => paineisFiltro.forEach(p => p._filtro.contar()),
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => aplicar());
   else aplicar();

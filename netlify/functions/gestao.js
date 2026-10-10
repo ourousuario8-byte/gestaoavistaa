@@ -11,6 +11,7 @@ const resumoBaseHandler = require('../../api/producao/resumo-base');
 const producaoDadosHandler = require('../../api/producao/dados');
 const qlpDadosHandler = require('../../api/qlp/dados');
 const qlpQuadroHandler = require('../../api/qlp/quadro');
+const qlpPainelHandler = require('../../api/qlp/painel');
 const recebimentoHandler = require('../../api/recebimento');
 const usuariosHandler = require('../../api/usuarios');
 
@@ -78,6 +79,8 @@ exports.handler = async (event) => {
       await resumoBaseHandler(req, res);
     } else if (path.startsWith('/producao/dados')) {
       await producaoDadosHandler(req, res);
+    } else if (path.startsWith('/qlp/painel')) {
+      await qlpPainelHandler(req, res);
     } else if (path.startsWith('/qlp/quadro')) {
       await qlpQuadroHandler(req, res);
     } else if (path.startsWith('/qlp/dados')) {
