@@ -38,7 +38,7 @@ const pages = [
   'menu', 'ferramentas', 'painel', 'qlp', 'producao',
   'resumo-base', 'mapacarga', 'avaria', 'alocacaobox',
   'controle-coletores', 'resumo-equipamentos',
-  'Linha_distribuição', 'recebimento', 'recebimento-agenda', 'usuarios', 'perfil', 'qlp-importar', 'correcoes'
+  'Linha_distribuição', 'recebimento', 'recebimento-agenda', 'usuarios', 'perfil', 'qlp-importar', 'correcoes', 'recebimento-dashboard'
 ];
 
 pages.forEach(page => {

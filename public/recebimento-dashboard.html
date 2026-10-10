@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="/js/fuso.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Recebimento</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="/css/tema.css" rel="stylesheet">
+  <style>
+    .viz-root {
+      /* Cores dos gráficos (validadas contra a superfície branca) */
+      --serie-1: #2a78d6;   /* contagens e tempo de conferência */
+      --serie-2: #eb6834;   /* tempo de espera do fornecedor */
+      --grade:   #ebe8e1;
+      --trilho:  #f1efe9;
+    }
+    .container { max-width: 1400px; }
+
+    /* ===== Indicadores ===== */
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 16px; min-width: 0; }
+    .kpi .r { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .kpi .v { font-size: clamp(22px, 2.6vw, 30px); font-weight: 650; line-height: 1.2; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kpi small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .kpi .chave { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: baseline; }
+
+    /* ===== Filtros (uma linha acima dos gráficos) ===== */
+    .barra-filtros { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 16px; box-shadow: var(--shadow); }
+    .barra-filtros .f { display: flex; flex-direction: column; gap: 4px; min-width: 150px; flex: 1; }
+    .barra-filtros .f.curto { flex: 0 1 150px; }
+    .barra-filtros label { font-size: 12px; color: var(--muted); font-weight: 600; margin: 0; }
+    .barra-filtros select, .barra-filtros input { padding: 8px 10px; font-size: 14px; }
+    .oculto { display: none !important; }
+
+    /* ===== Grade de gráficos ===== */
+    .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; margin-bottom: 16px; }
+    .grade.larga { grid-template-columns: 1fr; }
+    .graf { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px; min-width: 0; }
+    .graf h3 { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .graf .sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .vazio-graf { color: var(--muted); font-size: 13px; padding: 24px 0; text-align: center; }
+
+    /* Barras horizontais */
+    .hbar { display: grid; grid-template-columns: minmax(90px, 38%) 1fr; gap: 8px 10px; align-items: center; }
+    .hbar .rot { font-size: 13px; color: var(--text); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hbar .trilho { position: relative; height: 22px; display: flex; align-items: center; }
+    .hbar .barra { height: 18px; border-radius: 0 4px 4px 0; background: var(--cor, var(--serie-1)); min-width: 2px; }
+    .hbar .val { font-size: 12px; color: var(--text); font-weight: 600; margin-left: 6px; white-space: nowrap; }
+    .hbar .val small { color: var(--muted); font-weight: 500; }
+    .hbar .alvo { cursor: default; }
+
+    /* Colunas (histograma) */
+    .colunas { display: flex; align-items: flex-end; gap: 2px; height: 170px; border-bottom: 1px solid var(--grade); padding-top: 18px; }
+    .colunas .c { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 0; }
+    .colunas .c .b { width: 100%; max-width: 24px; border-radius: 4px 4px 0 0; background: var(--cor, var(--serie-1)); min-height: 1px; }
+    .colunas .c .n { font-size: 11px; color: var(--text); font-weight: 600; margin-bottom: 3px; }
+    .eixo-x { display: flex; gap: 2px; margin-top: 6px; }
+    .eixo-x span { flex: 1; text-align: center; font-size: 11px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Linha */
+    .linha-wrap { position: relative; }
+    .linha-wrap svg { width: 100%; height: 220px; display: block; overflow: visible; }
+    .linha-wrap .eixo { font-size: 11px; fill: var(--muted); }
+    .linha-wrap .cruz { stroke: var(--border-forte); stroke-width: 1; }
+
+    /* Ranking (tabela com barra) */
+    .ranking { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .ranking th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ranking th.num, .ranking td.num { text-align: right; }
+    .ranking td { padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .ranking tr:last-child td { border-bottom: none; }
+    .ranking .nome { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ranking .mini { display: flex; align-items: center; gap: 6px; min-width: 110px; }
+    .ranking .mini span { height: 10px; border-radius: 0 3px 3px 0; background: var(--serie-1); }
+    .rank-wrap { overflow-x: auto; }
+
+    /* Tooltip */
+    .dica-graf {
+      position: fixed; z-index: 50; pointer-events: none; background: #2f3437; color: #fff;
+      font-size: 12px; padding: 7px 10px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.15);
+      max-width: 260px; display: none; line-height: 1.4;
+    }
+    .dica-graf strong { display: block; font-weight: 600; }
+
+    .acoes-topo { display: flex; gap: 8px; flex-wrap: wrap; }
+    .carregando-tela { text-align: center; padding: 40px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container viz-root">
+    <div class="header">
+      <div>
+        <h1><i class="fas fa-chart-line"></i> Dashboard Recebimento</h1>
+        <p id="periodoTexto">Histórico dos recebimentos</p>
+      </div>
+      <div class="acoes-topo">
+        <button class="btn btn-secondary" id="btnTabela"><i class="fas fa-table"></i> Ver registros</button>
+        <button class="btn btn-success" id="btnCSV"><i class="fas fa-file-csv"></i> CSV</button>
+        <a class="btn btn-secondary" href="/menu" style="text-decoration:none"><i class="fas fa-arrow-left"></i> Menu</a>
+      </div>
+    </div>
+
+    <div class="barra-filtros">
+      <div class="f curto">
+        <label for="fPeriodo">Período</label>
+        <select id="fPeriodo">
+          <option value="hoje">Hoje</option>
+          <option value="7">Últimos 7 dias</option>
+          <option value="30" selected>Últimos 30 dias</option>
+          <option value="90">Últimos 90 dias</option>
+          <option value="mes">Este mês</option>
+          <option value="tudo">Tudo</option>
+          <option value="personalizado">Personalizado</option>
+        </select>
+      </div>
+      <div class="f curto oculto" id="boxDe"><label for="fDe">De</label><input type="date" id="fDe"></div>
+      <div class="f curto oculto" id="boxAte"><label for="fAte">Até</label><input type="date" id="fAte"></div>
+      <div class="f"><label for="fFornecedor">Fornecedor</label><select id="fFornecedor"><option value="">Todos</option></select></div>
+      <div class="f"><label for="fConferente">Conferente</label><select id="fConferente"><option value="">Todos</option></select></div>
+      <div class="f"><label for="fSituacao">Situação</label><select id="fSituacao"><option value="">Todas</option></select></div>
+      <div class="f curto"><label for="fEtapa">Status</label><select id="fEtapa"><option value="">Todos</option></select></div>
+    </div>
+
+    <div id="carregando" class="carregando-tela"><i class="fas fa-spinner fa-spin"></i> Carregando histórico...</div>
+    <div class="status" id="status"></div>
+
+    <div id="conteudo" class="oculto">
+      <div class="kpis" id="kpis"></div>
+
+      <div class="grade">
+        <div class="graf"><h3>Recebimentos por dia</h3><div class="sub">Quantidade de recebimentos registrados</div><div id="gLinha"></div></div>
+        <div class="graf"><h3>Status</h3><div class="sub">Etapa atual dos recebimentos</div><div id="gEtapa"></div></div>
+      </div>
+
+      <div class="grade">
+        <div class="graf"><h3>Situações</h3><div class="sub">Situação informada na chegada</div><div id="gSituacao"></div></div>
+        <div class="graf"><h3>Divergências</h3><div class="sub">Motivos nos recebimentos finalizados com divergência</div><div id="gDivergencia"></div></div>
+      </div>
+
+      <div class="grade">
+        <div class="graf"><h3>Tempo de conferência</h3><div class="sub">Do início ao fim da conferência (recebimentos com as duas horas)</div><div id="gConferencia"></div></div>
+        <div class="graf"><h3>Tempo de espera do fornecedor</h3><div class="sub">Da chegada ao início da conferência</div><div id="gEspera"></div></div>
+      </div>
+
+      <div class="grade larga">
+        <div class="graf"><h3>Fornecedores</h3><div class="sub">Os 15 com mais recebimentos no período</div><div class="rank-wrap" id="gFornecedores"></div></div>
+      </div>
+
+      <div class="grade larga">
+        <div class="graf"><h3>Conferentes</h3><div class="sub">Recebimentos conferidos e tempo médio</div><div class="rank-wrap" id="gConferentes"></div></div>
+      </div>
+
+      <div class="grade larga oculto" id="boxTabela">
+        <div class="graf"><h3>Registros</h3><div class="sub" id="subTabela"></div><div class="rank-wrap" id="gTabela"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dica-graf" id="dica"></div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const usuario = sessionStorage.getItem('usuario') || '';
+    let todos = [];       // todos os recebimentos (do setor do usuário)
+    let filtrados = [];
+
+    function esc(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    const fmt = n => Number(n || 0).toLocaleString('pt-BR');
+    const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 : 0);
+
+    // ===== Datas e tempos =====
+    function dataDe(texto) {           // "dd/mm/aaaa" → Date
+      const m = String(texto || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+    }
+    function isoDe(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+    function minutos(hora) {            // "HH:MM" → minutos do dia
+      const m = String(hora || '').match(/^(\d{1,2}):(\d{2})/);
+      return m ? +m[1] * 60 + +m[2] : null;
+    }
+    function duracao(ini, fim) {         // minutos entre duas horas (vira o dia se preciso)
+      const a = minutos(ini), b = minutos(fim);
+      if (a === null || b === null) return null;
+      return b >= a ? b - a : b + 1440 - a;
+    }
+    function fmtMin(m) {
+      if (m === null || m === undefined || isNaN(m)) return '—';
+      m = Math.round(m);
+      if (m < 60) return `${m} min`;
+      return `${Math.floor(m / 60)}h${m % 60 ? ' ' + String(m % 60).padStart(2, '0') + 'min' : ''}`;
+    }
+    const media = lista => (lista.length ? lista.reduce((t, x) => t + x, 0) / lista.length : null);
+
+    // Campos calculados de cada recebimento
+    function preparar(r) {
+      const conf = r['Hora Início'] && r['Hora Fim'] ? duracao(r['Hora Início'], r['Hora Fim']) : null;
+      const espera = r['Hora Chegada'] && r['Hora Início'] ? duracao(r['Hora Chegada'], r['Hora Início']) : null;
+      return {
+        ...r,
+        _data: dataDe(r['Data']),
+        _conf: conf,
+        _espera: espera,
+        _divergencias: r['Divergência'] === 'Sim'
+          ? String(r['Qual Divergência'] || 'Não informada').split(/,\s*/).map(x => x.trim()).filter(Boolean)
+          : [],
+      };
+    }
+
+    // ===== Tooltip =====
+    const dica = $('dica');
+    function mostrarDica(e, html) {
+      dica.innerHTML = html;
+      dica.style.display = 'block';
+      const x = Math.min(e.clientX + 14, window.innerWidth - dica.offsetWidth - 8);
+      const y = Math.min(e.clientY + 14, window.innerHeight - dica.offsetHeight - 8);
+      dica.style.left = x + 'px';
+      dica.style.top = y + 'px';
+    }
+    function esconderDica() { dica.style.display = 'none'; }
+    document.addEventListener('mousemove', e => {
+      const alvo = e.target.closest('[data-dica]');
+      if (alvo) mostrarDica(e, alvo.dataset.dica);
+      else if (!e.target.closest('.linha-wrap')) esconderDica();
+    });
+
+    // ===== Gráficos =====
+    // Barras horizontais: itens [{ rotulo, valor }], valor exibido com % do total
+    function hbar(el, itens, { cor = 'var(--serie-1)', total = null, sufixo = '' } = {}) {
+      if (!itens.length) { el.innerHTML = '<div class="vazio-graf">Sem dados no período</div>'; return; }
+      const max = Math.max(...itens.map(i => i.valor));
+      const soma = total ?? itens.reduce((t, i) => t + i.valor, 0);
+      el.innerHTML = `<div class="hbar" style="--cor:${cor}">` + itens.map(i => {
+        const p = pct(i.valor, soma);
+        const dicaTxt = esc(`<strong>${esc(i.rotulo)}</strong>${fmt(i.valor)}${sufixo} · ${p}%`);
+        return `<div class="rot" title="${esc(i.rotulo)}">${esc(i.rotulo)}</div>
+          <div class="trilho alvo" data-dica="${dicaTxt}">
+            <div class="barra" style="width:${Math.max(1, (i.valor / max) * 78)}%"></div>
+            <span class="val">${fmt(i.valor)}${sufixo} <small>${p}%</small></span>
+          </div>`;
+      }).join('') + '</div>';
+    }
+
+    // Histograma de tempos: faixas de minutos
+    const FAIXAS = [[0, 15, '0–15'], [15, 30, '15–30'], [30, 45, '30–45'], [45, 60, '45–60'], [60, 90, '1h–1h30'], [90, 120, '1h30–2h'], [120, Infinity, '2h+']];
+    function histograma(el, valores, cor) {
+      if (!valores.length) { el.innerHTML = '<div class="vazio-graf">Sem recebimentos com as horas preenchidas</div>'; return; }
+      const cont = FAIXAS.map(([a, b]) => valores.filter(v => v >= a && v < b).length);
+      const max = Math.max(...cont, 1);
+      const med = media(valores);
+      const ord = [...valores].sort((a, b) => a - b);
+      const mediana = ord[Math.floor(ord.length / 2)];
+      el.innerHTML = `
+        <div class="sub" style="margin:-6px 0 4px">Média <strong>${fmtMin(med)}</strong> · mediana <strong>${fmtMin(mediana)}</strong> · ${fmt(valores.length)} recebimento(s)</div>
+        <div class="colunas" style="--cor:${cor}">` + cont.map((n, i) => `
+          <div class="c" data-dica="${esc(`<strong>${FAIXAS[i][2]} min</strong>${fmt(n)} recebimento(s) · ${pct(n, valores.length)}%`)}">
+            ${n ? `<span class="n">${fmt(n)}</span>` : ''}
+            <div class="b" style="height:${(n / max) * 100}%"></div>
+          </div>`).join('') + `</div>
+        <div class="eixo-x">${FAIXAS.map(f => `<span>${f[2]}</span>`).join('')}</div>`;
+    }
+
+    // Linha: recebimentos por dia (crosshair + tooltip)
+    function linha(el, pontos) {
+      if (!pontos.length) { el.innerHTML = '<div class="vazio-graf">Sem dados no período</div>'; return; }
+      // Desenha na largura real do cartão (sem esticar o texto no celular)
+      const W = Math.max(280, Math.round(el.clientWidth || 640)), H = 220, ml = 34, mr = 16, mt = 18, mb = 26;
+      const max = Math.max(...pontos.map(p => p.valor), 1);
+      const passo = Math.max(1, Math.ceil(max / 4));
+      const topo = passo * Math.ceil(max / passo);
+      const x = i => ml + (pontos.length === 1 ? (W - ml - mr) / 2 : (i * (W - ml - mr)) / (pontos.length - 1));
+      const y = v => mt + (H - mt - mb) * (1 - v / topo);
+      const ticks = [];
+      for (let v = 0; v <= topo; v += passo) ticks.push(v);
+      const cadaRotulo = Math.max(1, Math.ceil(pontos.length / Math.max(3, Math.floor(W / 80))));
+      const caminho = pontos.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.valor).toFixed(1)}`).join(' ');
+      const ult = pontos[pontos.length - 1];
+      // Rotula o pico mais recente (o primeiro costuma colidir com o eixo)
+      const maior = pontos.reduce((a, p) => (p.valor >= a.valor ? p : a), pontos[0]);
+      el.innerHTML = `<div class="linha-wrap"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Recebimentos por dia">
+        ${ticks.map(v => `<line x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grade)" stroke-width="1"/>
+          <text class="eixo" x="${ml - 6}" y="${y(v) + 4}" text-anchor="end">${fmt(v)}</text>`).join('')}
+        ${pontos.map((p, i) => (i % cadaRotulo === 0 || i === pontos.length - 1)
+          ? `<text class="eixo" x="${x(i)}" y="${H - 6}" text-anchor="middle">${p.rotulo.slice(0, 5)}</text>` : '').join('')}
+        <path d="${caminho} L${x(pontos.length - 1)},${y(0)} L${x(0)},${y(0)} Z" fill="var(--serie-1)" opacity=".1"/>
+        <path d="${caminho}" fill="none" stroke="var(--serie-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        <line class="cruz" id="cruz" x1="0" x2="0" y1="${mt}" y2="${H - mb}" style="display:none" vector-effect="non-scaling-stroke"/>
+        <circle id="ponto" r="4.5" fill="var(--serie-1)" stroke="#fff" stroke-width="2" style="display:none"/>
+        <circle cx="${x(pontos.length - 1)}" cy="${y(ult.valor)}" r="4.5" fill="var(--serie-1)" stroke="#fff" stroke-width="2"/>
+        <text x="${x(pontos.indexOf(maior))}" y="${y(maior.valor) - 8}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text)">${fmt(maior.valor)}</text>
+      </svg></div>`;
+      const svg = el.querySelector('svg');
+      const cruz = el.querySelector('#cruz');
+      const ponto = el.querySelector('#ponto');
+      svg.addEventListener('mousemove', e => {
+        const r = svg.getBoundingClientRect();
+        const px = ((e.clientX - r.left) / r.width) * W;
+        let i = pontos.length === 1 ? 0 : Math.round(((px - ml) / (W - ml - mr)) * (pontos.length - 1));
+        i = Math.max(0, Math.min(pontos.length - 1, i));
+        cruz.setAttribute('x1', x(i)); cruz.setAttribute('x2', x(i)); cruz.style.display = '';
+        ponto.setAttribute('cx', x(i)); ponto.setAttribute('cy', y(pontos[i].valor)); ponto.style.display = '';
+        mostrarDica(e, `<strong>${esc(pontos[i].rotulo)}</strong>${fmt(pontos[i].valor)} recebimento(s)${pontos[i].cargas ? ` · ${fmt(pontos[i].cargas)} carga(s)` : ''}`);
+      });
+      svg.addEventListener('mouseleave', () => { cruz.style.display = 'none'; ponto.style.display = 'none'; esconderDica(); });
+    }
+
+    // Ranking com barra (fornecedores / conferentes)
+    function ranking(el, linhas, colunas) {
+      if (!linhas.length) { el.innerHTML = '<div class="vazio-graf">Sem dados no período</div>'; return; }
+      const max = Math.max(...linhas.map(l => l.qtd), 1);
+      el.innerHTML = `<table class="ranking"><thead><tr>${colunas.map(c => `<th class="${c.num ? 'num' : ''}">${c.t}</th>`).join('')}</tr></thead><tbody>` +
+        linhas.map(l => `<tr>${colunas.map(c => {
+          if (c.barra) return `<td><div class="mini" data-dica="${esc(`<strong>${esc(l.nome)}</strong>${fmt(l.qtd)} recebimento(s)`)}"><span style="width:${Math.max(2, (l.qtd / max) * 90)}px"></span>${fmt(l.qtd)}</div></td>`;
+          return `<td class="${c.num ? 'num' : ''} ${c.k === 'nome' ? 'nome' : ''}" ${c.k === 'nome' ? `title="${esc(l.nome)}"` : ''}>${c.f ? c.f(l[c.k]) : esc(l[c.k])}</td>`;
+        }).join('')}</tr>`).join('') + '</tbody></table>';
+    }
+
+    // ===== Agrupamentos =====
+    function contar(lista, chave) {
+      const m = new Map();
+      lista.forEach(r => {
+        const k = (typeof chave === 'function' ? chave(r) : r[chave]) || 'Não informado';
+        m.set(k, (m.get(k) || 0) + 1);
+      });
+      return [...m.entries()].map(([rotulo, valor]) => ({ rotulo, valor })).sort((a, b) => b.valor - a.valor);
+    }
+
+    function agruparPor(lista, chave) {
+      const m = new Map();
+      lista.forEach(r => {
+        const k = r[chave];
+        if (!k) return;
+        if (!m.has(k)) m.set(k, []);
+        m.get(k).push(r);
+      });
+      return m;
+    }
+
+    // ===== Filtros =====
+    function intervalo() {
+      const p = $('fPeriodo').value;
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+      if (p === 'tudo') return [null, null];
+      if (p === 'hoje') return [hoje, hoje];
+      if (p === 'mes') return [new Date(hoje.getFullYear(), hoje.getMonth(), 1), hoje];
+      if (p === 'personalizado') {
+        const de = $('fDe').value ? new Date($('fDe').value + 'T00:00') : null;
+        const ate = $('fAte').value ? new Date($('fAte').value + 'T00:00') : null;
+        return [de, ate];
+      }
+      const de = new Date(hoje); de.setDate(de.getDate() - Number(p) + 1);
+      return [de, hoje];
+    }
+
+    function aplicarFiltros() {
+      const [de, ate] = intervalo();
+      const forn = $('fFornecedor').value, conf = $('fConferente').value, sit = $('fSituacao').value, etapa = $('fEtapa').value;
+      filtrados = todos.filter(r =>
+        (!de || (r._data && r._data >= de)) &&
+        (!ate || (r._data && r._data <= ate)) &&
+        (!forn || r['Fornecedor'] === forn) &&
+        (!conf || r['Conferente'] === conf) &&
+        (!sit || r['Situação'] === sit) &&
+        (!etapa || r['Etapa'] === etapa));
+      $('periodoTexto').textContent = de || ate
+        ? `Histórico de ${de ? de.toLocaleDateString('pt-BR') : 'início'} a ${ate ? ate.toLocaleDateString('pt-BR') : 'hoje'}`
+        : 'Histórico completo';
+      renderizar();
+    }
+
+    function preencherSelect(id, valores, rotuloTodos) {
+      const atual = $(id).value;
+      const unicos = [...new Set(valores.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      $(id).innerHTML = `<option value="">${rotuloTodos}</option>` + unicos.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      if (unicos.includes(atual)) $(id).value = atual;
+    }
+
+    // ===== Render =====
+    function renderizar() {
+      const r = filtrados;
+      const cargas = new Set(r.map(x => String(x['Carga'] || '').trim()).filter(Boolean));
+      const fornecedores = new Set(r.map(x => x['Fornecedor']).filter(Boolean));
+      const confs = r.map(x => x._conf).filter(v => v !== null);
+      const esperas = r.map(x => x._espera).filter(v => v !== null);
+      const finalizados = r.filter(x => x['Etapa'] === 'Finalizado');
+      const comDiv = finalizados.filter(x => x['Divergência'] === 'Sim').length;
+      const semAgenda = r.filter(x => x['Status Agenda'] === 'Sem agenda').length;
+
+      $('kpis').innerHTML = [
+        ['Recebimentos', fmt(r.length), `${fmt(finalizados.length)} finalizado(s)`],
+        ['Cargas', fmt(cargas.size), 'números de carga distintos'],
+        ['Fornecedores', fmt(fornecedores.size), `${fmt(semAgenda)} recebimento(s) sem agenda`],
+        ['Tempo médio de conferência', fmtMin(media(confs)), `${fmt(confs.length)} com início e fim`, 'var(--serie-1)'],
+        ['Tempo médio de espera', fmtMin(media(esperas)), 'da chegada ao início', 'var(--serie-2)'],
+        ['Com divergência', `${pct(comDiv, finalizados.length)}%`, `${fmt(comDiv)} de ${fmt(finalizados.length)} finalizado(s)`],
+      ].map(([rotulo, valor, sub, cor]) => `<div class="kpi"><div class="r">${cor ? `<span class="chave" style="background:${cor}"></span>` : ''}${rotulo}</div>
+        <div class="v" title="${esc(valor)}">${valor}</div><small>${sub}</small></div>`).join('');
+
+      // Por dia
+      const porDia = new Map();
+      r.forEach(x => {
+        if (!x._data) return;
+        const k = x._data.getTime();
+        if (!porDia.has(k)) porDia.set(k, { valor: 0, cargas: new Set() });
+        porDia.get(k).valor++;
+        if (x['Carga']) porDia.get(k).cargas.add(x['Carga']);
+      });
+      // Preenche os dias sem recebimento com zero (eixo do tempo contínuo)
+      const dias = [...porDia.keys()].sort((a, b) => a - b);
+      const pontos = [];
+      if (dias.length) {
+        for (let d = new Date(dias[0]); d.getTime() <= dias[dias.length - 1]; d.setDate(d.getDate() + 1)) {
+          const p = porDia.get(d.getTime());
+          pontos.push({ rotulo: d.toLocaleDateString('pt-BR'), valor: p ? p.valor : 0, cargas: p ? p.cargas.size : 0 });
+        }
+      }
+      linha($('gLinha'), pontos);
+
+      hbar($('gEtapa'), contar(r, 'Etapa'));
+      hbar($('gSituacao'), contar(r, 'Situação'));
+      const divs = [];
+      finalizados.forEach(x => x._divergencias.forEach(d => divs.push({ d })));
+      hbar($('gDivergencia'), contar(divs, 'd'), { total: comDiv || null });
+      histograma($('gConferencia'), confs, 'var(--serie-1)');
+      histograma($('gEspera'), esperas, 'var(--serie-2)');
+
+      // Fornecedores
+      const porForn = agruparPor(r, 'Fornecedor');
+      const linhasForn = [...porForn.entries()].map(([nome, l]) => {
+        const fin = l.filter(x => x['Etapa'] === 'Finalizado');
+        return {
+          nome,
+          qtd: l.length,
+          cargas: new Set(l.map(x => x['Carga']).filter(Boolean)).size,
+          conf: media(l.map(x => x._conf).filter(v => v !== null)),
+          espera: media(l.map(x => x._espera).filter(v => v !== null)),
+          div: fin.length ? `${pct(fin.filter(x => x['Divergência'] === 'Sim').length, fin.length)}%` : '—',
+          semAgenda: l.filter(x => x['Status Agenda'] === 'Sem agenda').length,
+        };
+      }).sort((a, b) => b.qtd - a.qtd).slice(0, 15);
+      ranking($('gFornecedores'), linhasForn, [
+        { t: 'Fornecedor', k: 'nome' },
+        { t: 'Recebimentos', barra: true },
+        { t: 'Cargas', k: 'cargas', num: true, f: fmt },
+        { t: 'Conferência média', k: 'conf', num: true, f: fmtMin },
+        { t: 'Espera média', k: 'espera', num: true, f: fmtMin },
+        { t: 'Divergência', k: 'div', num: true },
+        { t: 'Sem agenda', k: 'semAgenda', num: true, f: fmt },
+      ]);
+
+      // Conferentes
+      const porConf = agruparPor(r, 'Conferente');
+      const linhasConf = [...porConf.entries()].map(([nome, l]) => {
+        const fin = l.filter(x => x['Etapa'] === 'Finalizado');
+        return {
+          nome,
+          qtd: l.length,
+          finalizados: fin.length,
+          conf: media(l.map(x => x._conf).filter(v => v !== null)),
+          div: fin.length ? `${pct(fin.filter(x => x['Divergência'] === 'Sim').length, fin.length)}%` : '—',
+        };
+      }).sort((a, b) => b.qtd - a.qtd);
+      ranking($('gConferentes'), linhasConf, [
+        { t: 'Conferente', k: 'nome' },
+        { t: 'Recebimentos', barra: true },
+        { t: 'Finalizados', k: 'finalizados', num: true, f: fmt },
+        { t: 'Conferência média', k: 'conf', num: true, f: fmtMin },
+        { t: 'Divergência', k: 'div', num: true },
+      ]);
+
+      if (!$('boxTabela').classList.contains('oculto')) renderTabela();
+    }
+
+    // ===== Tabela de registros (visão acessível dos dados) =====
+    const COLS_TABELA = ['Data', 'Fornecedor', 'Nota Fiscal', 'Status Agenda', 'Situação', 'Carga', 'Hora Chegada', 'Hora Início', 'Hora Fim', 'Conferente', 'Divergência', 'Qual Divergência', 'Etapa'];
+    function renderTabela() {
+      const lista = filtrados.slice(0, 500);
+      $('subTabela').textContent = `${fmt(filtrados.length)} registro(s)` + (filtrados.length > 500 ? ' — mostrando os 500 primeiros (o CSV traz todos)' : '');
+      $('gTabela').innerHTML = `<table class="ranking"><thead><tr>${COLS_TABELA.map(c => `<th>${c}</th>`).join('')}<th class="num">Conferência</th><th class="num">Espera</th></tr></thead><tbody>` +
+        lista.map(x => `<tr>${COLS_TABELA.map(c => `<td>${esc(x[c])}</td>`).join('')}<td class="num">${fmtMin(x._conf)}</td><td class="num">${fmtMin(x._espera)}</td></tr>`).join('') +
+        '</tbody></table>';
+    }
+
+    $('btnTabela').addEventListener('click', () => {
+      const box = $('boxTabela');
+      box.classList.toggle('oculto');
+      $('btnTabela').innerHTML = box.classList.contains('oculto') ? '<i class="fas fa-table"></i> Ver registros' : '<i class="fas fa-chart-bar"></i> Esconder registros';
+      if (!box.classList.contains('oculto')) { renderTabela(); box.scrollIntoView({ behavior: 'smooth' }); }
+    });
+
+    $('btnCSV').addEventListener('click', () => {
+      const cab = [...COLS_TABELA, 'Conferência (min)', 'Espera (min)'];
+      const linhas = filtrados.map(x => [...COLS_TABELA.map(c => x[c]), x._conf ?? '', x._espera ?? '']);
+      const csv = [cab, ...linhas].map(l => l.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
+      a.download = `recebimentos_${isoDe(new Date())}.csv`;
+      a.click();
+    });
+
+    // ===== Carregamento =====
+    async function carregar() {
+      try {
+        const resp = await fetch('/api/recebimento', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'obterRecebimentos', filtros: { data: 'todas' }, usuario }),
+        });
+        const r = await resp.json();
+        if (resp.status === 401) { window.location.href = '/'; return; }
+        if (!r.ok) throw new Error(r.msg || `HTTP ${resp.status}`);
+        todos = (r.dados || []).map(preparar);
+        preencherSelect('fFornecedor', todos.map(x => x['Fornecedor']), 'Todos');
+        preencherSelect('fConferente', todos.map(x => x['Conferente']), 'Todos');
+        preencherSelect('fSituacao', todos.map(x => x['Situação']), 'Todas');
+        preencherSelect('fEtapa', todos.map(x => x['Etapa']), 'Todos');
+        $('carregando').classList.add('oculto');
+        $('conteudo').classList.remove('oculto');
+        aplicarFiltros();
+      } catch (e) {
+        $('carregando').classList.add('oculto');
+        $('status').innerHTML = `<i class="fas fa-exclamation-triangle"></i> Erro ao carregar: ${esc(e.message)}`;
+        $('status').className = 'status show error';
+      }
+    }
+
+    // Redesenha ao mudar o tamanho da tela (a linha usa a largura real do cartão)
+    let timerResize = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(timerResize);
+      timerResize = setTimeout(() => { if (todos.length) renderizar(); }, 200);
+    });
+
+    $('fPeriodo').addEventListener('change', () => {
+      const p = $('fPeriodo').value === 'personalizado';
+      $('boxDe').classList.toggle('oculto', !p);
+      $('boxAte').classList.toggle('oculto', !p);
+      aplicarFiltros();
+    });
+    ['fDe', 'fAte', 'fFornecedor', 'fConferente', 'fSituacao', 'fEtapa'].forEach(id => $(id).addEventListener('change', aplicarFiltros));
+
+    if (!sessionStorage.getItem('token')) window.location.href = '/';
+    else carregar();
+  </script>
+</body>
+</html>
