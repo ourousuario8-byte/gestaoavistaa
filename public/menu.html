@@ -379,7 +379,7 @@
         const MODULOS = [
             { id: 'colaboradores', titulo: 'Resumo de Colaboradores', sub: 'Presença de hoje', icone: 'fa-chart-pie', cor: 'primary', url: '/resumo-base',
               termos: ['resumo de colaboradores', 'resumo colaboradores', 'resumo base', 'resumo presenca', 'resumo de presenca'], carregar: carregarColaboradores },
-            { id: 'qlp', titulo: 'QLP', sub: 'Quadro de colaboradores', icone: 'fa-chart-bar', cor: 'peach', url: '/qlp',
+            { id: 'qlp', titulo: 'QLP', sub: 'Quadro, absenteísmo e abandono', icone: 'fa-chart-bar', cor: 'peach', url: '/qlp',
               termos: ['qlp'], carregar: carregarQLP },
             { id: 'equipamentos', titulo: 'Equipamentos', sub: 'Coletores e chaves', icone: 'fa-barcode', cor: 'blue', url: '/resumo-equipamentos',
               termos: ['resumo equipamentos', 'resumo de equipamentos', 'painel equipamentos', 'controle de equipamentos', 'coletor', 'rfid'], carregar: carregarEquipamentos },
@@ -445,16 +445,16 @@
         }
 
         async function carregarQLP() {
-            const r = await buscarJSON('/api/qlp/quadro');
+            const r = await buscarJSON('/api/qlp/painel?resumo=1');
             const e = r.estatisticas || {};
-            const porSecao = {};
-            Object.entries(e.porSecao || {}).forEach(([k, v]) => { porSecao[k] = typeof v === 'object' ? (v.total || 0) : v; });
+            const porDepto = {};
+            Object.entries(e.porDepartamento || {}).forEach(([k, v]) => { porDepto[k] = v.ativos || 0; });
             return `<div class="kpis">
-                    ${kpi(e.total || 0, 'Quadro')}
-                    ${kpi(e.ativos || 0, 'Ativos', 'verde')}
-                    ${kpi(e.inativos || 0, 'Inativos', 'vermelho')}
+                    ${kpi(e.ativos || 0, `Ativos de ${e.total || 0}`, 'verde')}
+                    ${kpi(`${e.absenteismo || 0}%`, 'Absenteísmo 30d', 'ambar')}
+                    ${kpi(`${e.taxaAbandono || 0}%`, `Abandono · ${e.emAbandono || 0}`, 'vermelho')}
                 </div>
-                ${topLista(porSecao)}`;
+                ${topLista(porDepto)}`;
         }
 
         async function carregarEquipamentos() {

@@ -25,6 +25,7 @@ app.use('/api/producao/resumo-base', require('./api/producao/resumo-base'));
 app.use('/api/producao/dados',       require('./api/producao/dados'));
 app.use('/api/qlp/dados',            require('./api/qlp/dados'));
 app.use('/api/qlp/quadro',           require('./api/qlp/quadro'));
+app.use('/api/qlp/painel',           require('./api/qlp/painel'));
 app.use('/api/recebimento',          require('./api/recebimento'));
 app.use('/api/usuarios',             require('./api/usuarios'));
 
