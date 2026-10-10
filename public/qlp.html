@@ -7,7 +7,6 @@
     <title>QLP</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="/css/tema.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         .info-linha { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; color: var(--muted); font-size: 14px; }
         .info-linha select { width: auto; padding: 8px 34px 8px 12px; font-size: 14px; }
@@ -37,19 +36,6 @@
         .badge-risco { background: var(--amber-soft); color: var(--amber); }
         .badge-situacao { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
         .badge-situacao.ativo { background: var(--green-soft); color: var(--green); border-color: transparent; }
-
-        .dropzone {
-            border: 2px dashed var(--border-forte);
-            border-radius: var(--radius);
-            padding: 30px 20px;
-            text-align: center;
-            cursor: pointer;
-            background: var(--surface-2);
-        }
-        .dropzone:hover, .dropzone.over { border-color: var(--primary); background: var(--primary-soft); }
-        .dropzone i { font-size: 30px; color: var(--primary); margin-bottom: 8px; }
-        .dropzone p { color: var(--muted); }
-        .dropzone strong { color: var(--text); }
 
         .oculto { display: none !important; }
 
@@ -87,7 +73,7 @@
 
         @media print {
             body { background: #fff; padding: 0; }
-            .header-actions, .barra-filtro, .filters, #cardUpload, .paginacao { display: none !important; }
+            .header-actions, .barra-filtro, .filters, .paginacao { display: none !important; }
         }
     </style>
 </head>
@@ -96,29 +82,11 @@
         <div class="header">
             <div>
                 <h1><i class="fas fa-chart-bar"></i> QLP</h1>
-                <p>Quadro de colaboradores, onde estão, supervisor, presença, absenteísmo e abandono</p>
             </div>
             <div class="header-actions">
-                <button class="btn btn-primary" id="btnMostrarUpload"><i class="fas fa-file-upload"></i> Subir planilha</button>
                 <button class="btn btn-success" id="btnCSV"><i class="fas fa-file-csv"></i> CSV</button>
                 <button class="btn btn-secondary" onclick="window.location.href='/menu'"><i class="fas fa-arrow-left"></i> Voltar</button>
             </div>
-        </div>
-
-        <!-- ===== UPLOAD ===== -->
-        <div class="card oculto" id="cardUpload">
-            <h2><i class="fas fa-file-excel"></i> Subir planilha do QLP (RM)</h2>
-            <div class="dropzone" id="dropzone">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p><strong>Clique ou arraste</strong> a planilha do QLP (.xlsx, .xls ou .csv)</p>
-                <p id="nomeArquivo" style="margin-top:6px; color:var(--text); font-weight:600"></p>
-            </div>
-            <input type="file" id="arquivo" accept=".xlsx,.xls,.csv" hidden>
-            <div class="acoes">
-                <button class="btn btn-primary" id="btnEnviar" disabled><i class="fas fa-upload"></i> Enviar e substituir o QLP</button>
-                <span class="contador"><i class="fas fa-info-circle"></i> O QLP é uma foto do quadro: cada envio substitui o anterior (aba <strong>QLP RM</strong>).</span>
-            </div>
-            <div class="status" id="statusUpload"></div>
         </div>
 
         <div id="carregando" class="carregando-tela"><i class="fas fa-spinner fa-spin"></i> Carregando QLP...</div>
@@ -240,7 +208,6 @@
         let dados = null;
         let filtrados = [];
         let pagina = 1;
-        let arquivoLido = null;
 
         function esc(v) {
             return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -266,7 +233,6 @@
                 const r = await resp.json();
                 if (!r.ok) {
                     if (r.semDados) {
-                        $('cardUpload').classList.remove('oculto');
                         $('conteudo').classList.add('oculto');
                         showStatus('statusGeral', `<i class="fas fa-info-circle"></i> ${esc(r.msg)}`, 'info');
                         return;
@@ -510,83 +476,6 @@
             a.download = `qlp_${new Date().toISOString().slice(0, 10)}.csv`;
             a.click();
         });
-
-        // ===== Upload da planilha =====
-        $('btnMostrarUpload').addEventListener('click', () => $('cardUpload').classList.toggle('oculto'));
-
-        function lerArquivo(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onerror = () => reject(new Error('Falha ao ler o arquivo'));
-                reader.onload = e => {
-                    try {
-                        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
-                        const ws = wb.Sheets[wb.SheetNames[0]];
-                        const matriz = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '', dateNF: 'dd/mm/yyyy' });
-                        const idxHeader = matriz.findIndex(l => l.filter(c => String(c).trim()).length >= 2);
-                        if (idxHeader === -1) throw new Error('Não foi encontrado cabeçalho no arquivo');
-                        const headers = matriz[idxHeader].map(h => String(h).trim());
-                        while (headers.length && !headers[headers.length - 1]) headers.pop();
-                        const linhas = matriz.slice(idxHeader + 1)
-                            .map(l => headers.map((_, i) => String(l[i] ?? '').trim()))
-                            .filter(l => l.some(Boolean));
-                        resolve({ headers, linhas });
-                    } catch (err) { reject(err); }
-                };
-                reader.readAsArrayBuffer(file);
-            });
-        }
-
-        async function selecionarArquivo(file) {
-            if (!file) return;
-            $('nomeArquivo').textContent = file.name;
-            showStatus('statusUpload', '<i class="fas fa-spinner fa-spin"></i> Lendo arquivo...', 'info');
-            try {
-                arquivoLido = await lerArquivo(file);
-                const h = arquivoLido.headers.map(x => x.toUpperCase());
-                if (!h.includes('NOME') || !(h.includes('CHAPA') || h.includes('COD_CHAPA'))) throw new Error('A planilha precisa ter as colunas CHAPA e NOME');
-                $('btnEnviar').disabled = false;
-                showStatus('statusUpload', `<i class="fas fa-check"></i> ${fmt(arquivoLido.linhas.length)} colaborador(es) e ${arquivoLido.headers.length} coluna(s) lidos. Clique em <strong>Enviar</strong>.`, 'info');
-            } catch (e) {
-                arquivoLido = null;
-                $('btnEnviar').disabled = true;
-                showStatus('statusUpload', `<i class="fas fa-exclamation-triangle"></i> ${esc(e.message)}`, 'error');
-            }
-        }
-
-        $('btnEnviar').addEventListener('click', async () => {
-            if (!arquivoLido) return;
-            if (dados && !confirm('O QLP atual será substituído por esta planilha. Continuar?')) return;
-            const btn = $('btnEnviar');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
-            try {
-                const resp = await fetch('/api/qlp/painel', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'importar', headers: arquivoLido.headers, linhas: arquivoLido.linhas }),
-                });
-                const r = await resp.json();
-                if (!r.ok) throw new Error(r.msg || `HTTP ${resp.status}`);
-                showStatus('statusUpload', `<i class="fas fa-check-circle"></i> ${esc(r.msg)}`, 'success');
-                arquivoLido = null;
-                $('arquivo').value = '';
-                $('nomeArquivo').textContent = '';
-                await carregar();
-            } catch (e) {
-                showStatus('statusUpload', `<i class="fas fa-exclamation-triangle"></i> ${esc(e.message)}`, 'error');
-                btn.disabled = false;
-            } finally {
-                btn.innerHTML = '<i class="fas fa-upload"></i> Enviar e substituir o QLP';
-            }
-        });
-
-        const dz = $('dropzone');
-        dz.addEventListener('click', () => $('arquivo').click());
-        $('arquivo').addEventListener('change', e => selecionarArquivo(e.target.files[0]));
-        dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
-        dz.addEventListener('dragleave', () => dz.classList.remove('over'));
-        dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); selecionarArquivo(e.dataTransfer.files[0]); });
 
         carregar();
     </script>

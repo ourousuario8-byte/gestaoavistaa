@@ -1,5 +1,11 @@
 // QLP a partir da planilha do RM (aba "QLP RM") cruzada com a presença (Base/Lista)
 const qlpService = require('../../lib/qlp');
+const sheetsService = require('../../lib/sheets');
+const { validarToken } = require('../../lib/auth_token');
+
+// Permissão (coluna Aba da aba Usuarios) que libera subir a planilha do QLP
+const AREA_IMPORTAR = 'Importar QLP';
+const semAcento = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,8 +16,16 @@ module.exports = async function handler(req, res) {
   try {
     // POST { action: 'importar', headers, linhas } — sobe a planilha do QLP
     if (req.method === 'POST') {
-      const { action, headers, linhas } = req.body || {};
+      const { action, headers, linhas, token } = req.body || {};
       if (action !== 'importar') return res.status(400).json({ ok: false, msg: 'Ação inválida' });
+
+      // Só quem tem a permissão "Importar QLP" (conferida na planilha, não só no token)
+      const sessao = validarToken(token);
+      if (!sessao) return res.status(401).json({ ok: false, msg: 'Sessão expirada. Faça login novamente.' });
+      const areas = await sheetsService.areasDoUsuario(sessao.usuario);
+      if (!areas.some(a => semAcento(a) === semAcento(AREA_IMPORTAR))) {
+        return res.status(403).json({ ok: false, msg: `Acesso restrito à permissão "${AREA_IMPORTAR}"` });
+      }
       if (!Array.isArray(headers) || !Array.isArray(linhas)) {
         return res.status(400).json({ ok: false, msg: 'Campos obrigatórios: headers, linhas' });
       }

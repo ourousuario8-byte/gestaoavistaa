@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="/js/fuso.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Importar QLP</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="/css/tema.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    .container { max-width: 760px; }
+    .dropzone {
+      border: 2px dashed var(--border-forte);
+      border-radius: var(--radius);
+      padding: 34px 20px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--surface-2);
+      transition: .15s;
+    }
+    .dropzone:hover, .dropzone.over { border-color: var(--primary); background: var(--primary-soft); }
+    .dropzone i { font-size: 30px; color: var(--primary); margin-bottom: 8px; }
+    .dropzone p { color: var(--muted); }
+    .dropzone strong { color: var(--text); }
+    .acoes { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+    .atual { display: flex; gap: 18px; flex-wrap: wrap; color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+    .atual strong { color: var(--text); }
+    .bloqueio { text-align: center; padding: 50px 20px; }
+    .bloqueio > i { font-size: 38px; color: var(--red); margin-bottom: 12px; }
+    .oculto { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1><i class="fas fa-file-upload"></i> Importar QLP</h1>
+      </div>
+      <div class="nav">
+        <a href="/menu"><i class="fas fa-arrow-left"></i> Menu</a>
+      </div>
+    </div>
+
+    <div class="card oculto" id="bloqueio">
+      <div class="bloqueio">
+        <i class="fas fa-lock"></i>
+        <h2 style="justify-content:center">Acesso restrito</h2>
+        <p class="contador">Você não tem a permissão <strong>Importar QLP</strong>. Peça a liberação a quem gerencia os usuários.</p>
+      </div>
+    </div>
+
+    <div class="card oculto" id="conteudo">
+      <h2><i class="fas fa-file-excel"></i> Planilha do QLP (RM)</h2>
+      <div class="atual">
+        <span><i class="fas fa-clock"></i> QLP atual: <strong id="dataAtual">-</strong></span>
+        <span><i class="fas fa-users"></i> <strong id="totalAtual">-</strong> colaborador(es)</span>
+      </div>
+
+      <div class="dropzone" id="dropzone">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p><strong>Clique ou arraste</strong> a planilha do QLP (.xlsx, .xls ou .csv)</p>
+        <p id="nomeArquivo" style="margin-top:6px; color:var(--text); font-weight:600"></p>
+      </div>
+      <input type="file" id="arquivo" accept=".xlsx,.xls,.csv" hidden>
+
+      <div class="acoes">
+        <button class="btn btn-primary" id="btnEnviar" disabled><i class="fas fa-upload"></i> Enviar e substituir o QLP</button>
+        <span class="contador"><i class="fas fa-info-circle"></i> Cada envio substitui o anterior (aba <strong>QLP RM</strong>).</span>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const token = sessionStorage.getItem('token');
+    const AREA = 'importar qlp';
+    let arquivoLido = null;
+
+    const fmt = n => Number(n || 0).toLocaleString('pt-BR');
+    const semAcento = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
+    function esc(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function showStatus(msg, tipo) {
+      $('status').innerHTML = msg;
+      $('status').className = `status show ${tipo}`;
+    }
+
+    // Confere a permissão atual na planilha (o servidor confere de novo ao importar)
+    async function verificarAcesso() {
+      if (!token) { window.location.href = '/'; return false; }
+      try {
+        const resp = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'minhasAreas', token }),
+        });
+        if (resp.status === 401) { window.location.href = '/'; return false; }
+        const r = await resp.json();
+        return !!(r.ok && (r.abas || []).some(a => semAcento(a) === AREA));
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function carregarAtual() {
+      try {
+        const r = await (await fetch('/api/qlp/painel?resumo=1')).json();
+        $('dataAtual').textContent = r.ok ? (r.dataUpload || '-') : 'nenhum QLP importado';
+        $('totalAtual').textContent = r.ok ? fmt(r.estatisticas && r.estatisticas.total) : '0';
+      } catch (e) { /* informativo */ }
+    }
+
+    function lerArquivo(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Falha ao ler o arquivo'));
+        reader.onload = e => {
+          try {
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const matriz = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '', dateNF: 'dd/mm/yyyy' });
+            const idxHeader = matriz.findIndex(l => l.filter(c => String(c).trim()).length >= 2);
+            if (idxHeader === -1) throw new Error('Não foi encontrado cabeçalho no arquivo');
+            const headers = matriz[idxHeader].map(h => String(h).trim());
+            while (headers.length && !headers[headers.length - 1]) headers.pop();
+            const linhas = matriz.slice(idxHeader + 1)
+              .map(l => headers.map((_, i) => String(l[i] ?? '').trim()))
+              .filter(l => l.some(Boolean));
+            resolve({ headers, linhas });
+          } catch (err) { reject(err); }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    async function selecionarArquivo(file) {
+      if (!file) return;
+      $('nomeArquivo').textContent = file.name;
+      showStatus('<i class="fas fa-spinner fa-spin"></i> Lendo arquivo...', 'info');
+      try {
+        arquivoLido = await lerArquivo(file);
+        const h = arquivoLido.headers.map(x => x.toUpperCase());
+        if (!h.includes('NOME') || !(h.includes('CHAPA') || h.includes('COD_CHAPA'))) throw new Error('A planilha precisa ter as colunas CHAPA e NOME');
+        $('btnEnviar').disabled = false;
+        showStatus(`<i class="fas fa-check"></i> ${fmt(arquivoLido.linhas.length)} colaborador(es) e ${arquivoLido.headers.length} coluna(s) lidos. Clique em <strong>Enviar</strong>.`, 'info');
+      } catch (e) {
+        arquivoLido = null;
+        $('btnEnviar').disabled = true;
+        showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(e.message)}`, 'error');
+      }
+    }
+
+    $('btnEnviar').addEventListener('click', async () => {
+      if (!arquivoLido) return;
+      if (!confirm('O QLP atual será substituído por esta planilha. Continuar?')) return;
+      const btn = $('btnEnviar');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+      try {
+        const resp = await fetch('/api/qlp/painel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'importar', token, headers: arquivoLido.headers, linhas: arquivoLido.linhas }),
+        });
+        const r = await resp.json();
+        if (!r.ok) throw new Error(r.msg || `HTTP ${resp.status}`);
+        showStatus(`<i class="fas fa-check-circle"></i> ${esc(r.msg)}`, 'success');
+        arquivoLido = null;
+        $('arquivo').value = '';
+        $('nomeArquivo').textContent = '';
+        carregarAtual();
+      } catch (e) {
+        showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(e.message)}`, 'error');
+        btn.disabled = false;
+      } finally {
+        btn.innerHTML = '<i class="fas fa-upload"></i> Enviar e substituir o QLP';
+      }
+    });
+
+    const dz = $('dropzone');
+    dz.addEventListener('click', () => $('arquivo').click());
+    $('arquivo').addEventListener('change', e => selecionarArquivo(e.target.files[0]));
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); selecionarArquivo(e.dataTransfer.files[0]); });
+
+    (async () => {
+      if (await verificarAcesso()) {
+        $('conteudo').classList.remove('oculto');
+        carregarAtual();
+      } else {
+        $('bloqueio').classList.remove('oculto');
+      }
+    })();
+  </script>
+</body>
+</html>
