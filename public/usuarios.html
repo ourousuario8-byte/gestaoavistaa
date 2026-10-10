@@ -60,6 +60,34 @@
     .bloqueio { text-align: center; padding: 60px 20px; }
     .bloqueio > i { font-size: 40px; color: var(--red); margin-bottom: 12px; }
 
+    .oculto { display: none !important; }
+    .vinculo-busca { position: relative; }
+    .resultados {
+      position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      box-shadow: var(--shadow); max-height: 320px; overflow-y: auto;
+    }
+    .resultado { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
+    .resultado:last-child { border-bottom: none; }
+    .resultado:hover { background: var(--primary-soft); }
+    .resultado.bloqueado { opacity: .55; cursor: not-allowed; }
+    .resultado strong { font-weight: 600; font-size: 14px; }
+    .resultado small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .vinculo-card {
+      border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2);
+      padding: 12px 14px; margin-top: 10px;
+    }
+    .vinculo-card .grade-v { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+    .vinculo-card .grade-v label { font-size: 12px; margin-bottom: 4px; }
+    .vinculo-card .topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .usuario .det { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .historico { margin-top: 18px; border-top: 1px dashed var(--border); padding-top: 14px; }
+    .historico h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: flex; gap: 8px; align-items: center; }
+    .hist-item { font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .hist-item:last-child { border-bottom: none; }
+    .hist-item small { color: var(--muted); display: block; margin-top: 2px; }
+    .lista-hist { max-height: 260px; overflow-y: auto; }
+
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
     }
@@ -81,6 +109,35 @@
       <div class="card">
         <h2 id="tituloForm"><span><i class="fas fa-user-plus"></i> Novo usuário</span></h2>
         <form id="form" autocomplete="off">
+          <div class="campo">
+            <label for="buscaColab">Colaborador do QLP</label>
+            <div class="vinculo-busca">
+              <input type="text" id="buscaColab" placeholder="Buscar pelo nome ou matrícula..." autocomplete="off">
+              <div class="resultados oculto" id="resultados"></div>
+            </div>
+            <div class="vinculo-card oculto" id="vinculoCard">
+              <div class="topo">
+                <strong id="vNome">-</strong>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="limparVinculo()" title="Remover vínculo"><i class="fas fa-unlink"></i></button>
+              </div>
+              <div class="grade-v">
+                <div><label>Matrícula</label><input type="text" id="vMatricula" readonly></div>
+                <div><label>Função</label><input type="text" id="vFuncao" readonly></div>
+                <div><label>Departamento no QLP</label><input type="text" id="vDepartamentoQLP" readonly></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label>Departamentos (setores) que o usuário vê</label>
+            <div class="areas" id="departamentos"></div>
+            <div class="nova-area">
+              <input type="text" id="novoDepartamento" placeholder="Outro departamento">
+              <button type="button" class="btn btn-secondary" onclick="adicionarDepartamento()"><i class="fas fa-plus"></i></button>
+            </div>
+            <div class="dica">O usuário só vê os dados dos departamentos marcados (o primeiro marcado é o principal, usado nos registros dele). Sem nenhum marcado, ou com a permissão "Todos os setores", vê tudo.</div>
+          </div>
+
           <div class="campo">
             <label for="usuario">Usuário</label>
             <input type="text" id="usuario" placeholder="ex.: joao.silva" required>
@@ -108,6 +165,11 @@
           </div>
           <div class="status" id="status"></div>
         </form>
+
+        <div class="historico oculto" id="historicoBox">
+          <h3><i class="fas fa-history"></i> Histórico de <span id="histUsuario"></span></h3>
+          <div class="lista-hist" id="listaHist"></div>
+        </div>
       </div>
 
       <div class="card">
@@ -130,6 +192,9 @@
     let areas = [];
     let areaAdmin = 'Usuários';
     let editando = null; // usuário em edição (null = novo)
+    let vinculo = null;  // colaborador do QLP atrelado { matricula, nome, funcao, departamento }
+    let ultimaSugestao = '';
+    let areaTodos = 'Todos os setores';
 
     function esc(v) {
       return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -166,7 +231,7 @@
         const marcada = marcadas.includes(a);
         return `<label class="area-opcao ${marcada ? 'marcada' : ''}">
           <input type="checkbox" value="${esc(a)}" ${marcada ? 'checked' : ''} onchange="this.parentElement.classList.toggle('marcada', this.checked)">
-          ${a === areaAdmin ? '<i class="fas fa-user-shield" style="color:var(--peach)"></i>' : ''} ${esc(a)}
+          ${a === areaAdmin ? '<i class="fas fa-user-shield" style="color:var(--peach)"></i>' : ''}${a === areaTodos ? '<i class="fas fa-globe-americas" style="color:var(--blue)"></i>' : ''} ${esc(a)}
         </label>`;
       }).join('');
     }
@@ -190,7 +255,7 @@
     function renderLista() {
       const filtro = document.getElementById('busca').value.trim().toLowerCase();
       const lista = filtro
-        ? usuarios.filter(u => u.usuario.toLowerCase().includes(filtro) || u.abas.some(a => a.toLowerCase().includes(filtro)))
+        ? usuarios.filter(u => [u.usuario, u.nome, u.matricula, u.departamento, u.funcao, ...u.abas].some(x => String(x || '').toLowerCase().includes(filtro)))
         : usuarios;
 
       document.getElementById('total').textContent = `(${usuarios.length})`;
@@ -200,6 +265,9 @@
               <div>
                 <strong><i class="fas fa-user-circle" style="color:var(--primary)"></i> ${esc(u.usuario)}</strong>
                 ${u.usuario === usuarioLogado ? '<small class="contador">(você)</small>' : ''}
+                <div class="det">${u.nome
+                  ? `${esc(u.nome)} · ${esc(u.matricula)}${u.funcao ? ' · ' + esc(u.funcao) : ''}${u.departamento ? ` · <strong>${esc(u.departamento)}</strong>` : ''}`
+                  : '<span style="color:var(--amber)"><i class="fas fa-exclamation-triangle"></i> Sem colaborador do QLP</span>'}</div>
                 <div class="chips">${u.abas.map(a => `<span class="chip ${a === areaAdmin ? 'admin' : ''}">${esc(a)}</span>`).join('')}</div>
               </div>
               <div class="botoes">
@@ -217,9 +285,13 @@
       document.getElementById('tituloForm').innerHTML = '<span><i class="fas fa-user-plus"></i> Novo usuário</span>';
       document.getElementById('dicaSenha').textContent = 'Obrigatória para novo usuário';
       document.getElementById('status').className = 'status';
+      definirVinculo(null);
+      definirDepartamentos([]);
+      ultimaSugestao = '';
+      document.getElementById('historicoBox').classList.add('oculto');
       renderAreas([]);
       renderLista();
-      document.getElementById('usuario').focus();
+      document.getElementById('buscaColab').focus();
     }
 
     function editar(nome) {
@@ -232,8 +304,11 @@
       document.getElementById('tituloForm').innerHTML = `<span><i class="fas fa-user-edit"></i> Editando ${esc(u.usuario)}</span>`;
       document.getElementById('dicaSenha').textContent = 'Deixe em branco para manter a senha atual';
       document.getElementById('status').className = 'status';
+      definirVinculo(u.matricula || u.nome ? { matricula: u.matricula, nome: u.nome, funcao: u.funcao, departamentoQLP: u.departamentoQLP || '' } : null);
+      definirDepartamentos(separarSetores(u.departamento));
       renderAreas(u.abas);
       renderLista();
+      carregarHistorico(u.usuario);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -254,6 +329,12 @@
         senha: document.getElementById('senha').value.trim(),
         abas: areasMarcadas(),
         novo: !editando,
+        vinculo: {
+          matricula: vinculo ? vinculo.matricula : '',
+          nome: vinculo ? vinculo.nome : '',
+          funcao: vinculo ? vinculo.funcao : '',
+          departamentos: deptoMarcados,
+        },
       };
 
       if (!dados.usuario) return showStatus('Informe o usuário.', 'error');
@@ -287,13 +368,151 @@
       }
       usuarios = r.usuarios;
       areaAdmin = r.areaAdmin;
+      areaTodos = r.areaTodosSetores || areaTodos;
+      departamentos = [...new Set([...(r.departamentos || []), ...r.usuarios.flatMap(u => separarSetores(u.departamento))])]
+        .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      renderDepartamentos();
       // Mantém áreas adicionadas manualmente que ainda não foram salvas
       areas = [...new Set([...r.areas, ...areas])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
       if (!editando) renderAreas(areasMarcadas());
       renderLista();
     }
 
+    // ===== Vínculo com o colaborador do QLP =====
+    function definirVinculo(v) {
+      vinculo = v;
+      const card = document.getElementById('vinculoCard');
+      card.classList.toggle('oculto', !v);
+      document.getElementById('vNome').textContent = v ? v.nome || '-' : '-';
+      document.getElementById('vMatricula').value = v ? v.matricula || '' : '';
+      document.getElementById('vFuncao').value = v ? v.funcao || '' : '';
+      document.getElementById('vDepartamentoQLP').value = v ? v.departamentoQLP || '' : '';
+    }
+
+    // ===== Departamentos (vários por usuário) =====
+    let departamentos = [];      // opções (QLP + já usados)
+    let deptoMarcados = [];      // na ordem em que foram marcados (o 1º é o principal)
+
+    function separarSetores(texto) {
+      return [...new Set(String(texto || '').split(/[;|\n]/).map(x => x.trim()).filter(Boolean))];
+    }
+
+    function renderDepartamentos() {
+      const opcoes = [...new Set([...deptoMarcados, ...departamentos])];
+      document.getElementById('departamentos').innerHTML = opcoes.length
+        ? opcoes.map(d => {
+            const pos = deptoMarcados.indexOf(d);
+            return `<label class="area-opcao ${pos !== -1 ? 'marcada' : ''}">
+              <input type="checkbox" value="${esc(d)}" ${pos !== -1 ? 'checked' : ''} onchange="alternarDepartamento(this.value, this.checked)">
+              ${esc(d)}${pos === 0 ? ' <small>(principal)</small>' : ''}
+            </label>`;
+          }).join('')
+        : '<span class="contador">Importe o QLP para listar os departamentos</span>';
+    }
+
+    function alternarDepartamento(d, marcado) {
+      deptoMarcados = deptoMarcados.filter(x => x !== d);
+      if (marcado) deptoMarcados.push(d);
+      renderDepartamentos();
+    }
+
+    function definirDepartamentos(lista) {
+      deptoMarcados = separarSetores((lista || []).join(';'));
+      renderDepartamentos();
+    }
+
+    function adicionarDepartamento() {
+      const input = document.getElementById('novoDepartamento');
+      const nome = input.value.trim();
+      if (!nome) return;
+      const existente = [...departamentos, ...deptoMarcados].find(d => d.toLowerCase() === nome.toLowerCase());
+      if (!deptoMarcados.includes(existente || nome)) deptoMarcados.push(existente || nome);
+      input.value = '';
+      renderDepartamentos();
+    }
+
+    function limparVinculo() {
+      definirVinculo(null);
+      document.getElementById('buscaColab').focus();
+    }
+
+    let resultadosBusca = [];
+    let timerBusca = null;
+    let buscaAtual = 0;
+
+    async function buscarColaborador() {
+      const termo = document.getElementById('buscaColab').value.trim();
+      const box = document.getElementById('resultados');
+      if (termo.length < 2) { box.classList.add('oculto'); return; }
+      const minha = ++buscaAtual;
+      box.innerHTML = '<div class="resultado"><small><i class="fas fa-spinner fa-spin"></i> Buscando no QLP...</small></div>';
+      box.classList.remove('oculto');
+      const r = await api({ action: 'buscarColaborador', termo });
+      if (minha !== buscaAtual) return;
+      if (!r.ok) { box.innerHTML = `<div class="resultado"><small>${esc(r.msg)}</small></div>`; return; }
+      resultadosBusca = r.colaboradores || [];
+      box.innerHTML = resultadosBusca.length
+        ? resultadosBusca.map((c, i) => {
+            const bloqueado = c.vinculadoA && c.vinculadoA !== editando;
+            return `<div class="resultado ${bloqueado ? 'bloqueado' : ''}" data-i="${i}">
+              <strong>${esc(c.nome)}</strong>
+              <small>${esc(c.matricula)}${c.funcao ? ' · ' + esc(c.funcao) : ''}${c.departamento ? ' · ' + esc(c.departamento) : ''}${c.situacao ? ' · ' + esc(c.situacao) : ''}</small>
+              ${c.vinculadoA ? `<small style="color:var(--amber)"><i class="fas fa-link"></i> Já atrelado ao usuário ${esc(c.vinculadoA)}</small>`
+                : (!editando ? `<small><i class="fas fa-user"></i> Usuário sugerido: <strong>${esc(c.sugestaoUsuario)}</strong></small>` : '')}
+            </div>`;
+          }).join('')
+        : '<div class="resultado"><small>Nenhum colaborador encontrado no QLP</small></div>';
+    }
+
+    document.getElementById('buscaColab').addEventListener('input', () => {
+      clearTimeout(timerBusca);
+      timerBusca = setTimeout(buscarColaborador, 300);
+    });
+
+    document.getElementById('resultados').addEventListener('click', e => {
+      const item = e.target.closest('[data-i]');
+      if (!item || item.classList.contains('bloqueado')) return;
+      const c = resultadosBusca[Number(item.dataset.i)];
+      definirVinculo({ matricula: c.matricula, nome: c.nome, funcao: c.funcao, departamentoQLP: c.departamento });
+      // O departamento do colaborador no QLP entra como principal
+      if (c.departamento) definirDepartamentos([c.departamento, ...deptoMarcados]);
+      // Novo usuário: sugere nome.sobrenome (sem sobrescrever o que foi digitado)
+      const campoUsuario = document.getElementById('usuario');
+      if (!editando && (!campoUsuario.value.trim() || campoUsuario.value.trim() === ultimaSugestao)) {
+        campoUsuario.value = c.sugestaoUsuario;
+        ultimaSugestao = c.sugestaoUsuario;
+      }
+      document.getElementById('buscaColab').value = '';
+      document.getElementById('resultados').classList.add('oculto');
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.vinculo-busca')) document.getElementById('resultados').classList.add('oculto');
+    });
+
+    // ===== Histórico =====
+    async function carregarHistorico(usuario) {
+      const box = document.getElementById('historicoBox');
+      box.classList.remove('oculto');
+      document.getElementById('histUsuario').textContent = usuario;
+      const lista = document.getElementById('listaHist');
+      lista.innerHTML = '<div class="hist-item"><small>Carregando...</small></div>';
+      const r = await api({ action: 'historico', usuario });
+      if (editando !== usuario) return;
+      if (!r.ok) { lista.innerHTML = `<div class="hist-item"><small>${esc(r.msg)}</small></div>`; return; }
+      lista.innerHTML = (r.historico || []).length
+        ? r.historico.map(h => `<div class="hist-item">
+            <strong>${esc(h['Ação'])}</strong> · ${esc(h['Data'])} · por ${esc(h['Responsável'])}
+            <small>Abas: ${esc(h['Abas'] || '-')}</small>
+            <small>${esc(h['Matrícula'] || 'sem matrícula')}${h['Função'] ? ' · ' + esc(h['Função']) : ''}${h['Departamento'] ? ' · ' + esc(h['Departamento']) : ''}${h['Grupo'] ? ' · Grupo ' + esc(h['Grupo']) : ''}${h['Turno'] ? ' · ' + esc(h['Turno']) : ''}</small>
+          </div>`).join('')
+        : '<div class="hist-item"><small>Sem alterações registradas ainda.</small></div>';
+    }
+
     document.getElementById('form').addEventListener('submit', salvar);
+    document.getElementById('novoDepartamento').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); adicionarDepartamento(); }
+    });
     document.getElementById('novaArea').addEventListener('keydown', e => {
       if (e.key === 'Enter') { e.preventDefault(); adicionarArea(); }
     });

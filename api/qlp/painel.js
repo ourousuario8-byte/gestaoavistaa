@@ -2,6 +2,7 @@
 const qlpService = require('../../lib/qlp');
 const sheetsService = require('../../lib/sheets');
 const { validarToken } = require('../../lib/auth_token');
+const setores = require('../../lib/setores');
 
 // Permissão (coluna Aba da aba Usuarios) que libera subir a planilha do QLP
 const AREA_IMPORTAR = 'Importar QLP';
@@ -33,8 +34,17 @@ module.exports = async function handler(req, res) {
     }
 
     // GET ?dias=30 — painel; &resumo=1 devolve só as estatísticas (dashboard)
+    // Setorizado: quem não vê todos os setores recebe só o próprio departamento
+    const acesso = await setores.acessoAtual();
+    if (!acesso.logado) return res.status(401).json({ ok: false, msg: 'Sessão expirada. Faça login novamente.' });
+
     const dias = req.query?.dias !== undefined ? Number(req.query.dias) : 30;
     const r = await qlpService.painel({ dias: Number.isFinite(dias) ? dias : 30 });
+    if (r.ok && !acesso.todos) {
+      r.colaboradores = r.colaboradores.filter(c => acesso.permite(c.departamento));
+      r.estatisticas = qlpService.estatisticas(r.colaboradores);
+    }
+    if (r.ok) r.setor = acesso.todos ? '' : acesso.setor;
     if (r.ok && req.query?.resumo) delete r.colaboradores;
     return res.status(200).json(r);
   } catch (error) {

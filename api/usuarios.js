@@ -1,7 +1,7 @@
 const usuariosService = require('../lib/usuarios');
 const { validarToken } = require('../lib/auth_token');
 
-const ACOES = ['listar', 'salvar', 'excluir'];
+const ACOES = ['listar', 'salvar', 'excluir', 'buscarColaborador', 'historico'];
 
 module.exports = async function handler(req, res) {
   // CORS
@@ -31,6 +31,14 @@ module.exports = async function handler(req, res) {
 
       case 'excluir':
         return res.status(200).json(await usuariosService.excluir(req.body.usuario, sessao.usuario));
+
+      // Busca no QLP para atrelar o usuário ao colaborador (sugere nome.sobrenome)
+      case 'buscarColaborador':
+        return res.status(200).json(await usuariosService.buscarColaborador(req.body.termo));
+
+      // Histórico de alterações (de um usuário ou de todos)
+      case 'historico':
+        return res.status(200).json(await usuariosService.historico(req.body.usuario));
 
       default:
         return res.status(400).json({

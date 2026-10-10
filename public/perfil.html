@@ -44,7 +44,7 @@
         <div class="avatar" id="avatar">?</div>
         <div>
           <strong id="nomeUsuario">Carregando...</strong>
-          <small>Você só pode alterar os seus próprios dados</small>
+          <small id="vinculoUsuario">Você só pode alterar os seus próprios dados</small>
         </div>
       </div>
 
@@ -129,6 +129,10 @@
         return;
       }
       $('nomeUsuario').textContent = r.usuario;
+      // Colaborador do QLP atrelado (definido pela gestão de usuários)
+      if (r.nome) {
+        $('vinculoUsuario').textContent = [r.nome, r.matricula, r.funcao, r.departamento].filter(Boolean).join(' · ');
+      }
       $('avatar').textContent = (r.usuario || '?').charAt(0).toUpperCase();
       $('grupo').value = r.grupo || '';
       $('turno').value = r.turno || '';

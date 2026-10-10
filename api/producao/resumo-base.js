@@ -1,6 +1,7 @@
 // api/producao/resumo-base.js - VERSÃO UNIFICADA COMPLETA
 const sheetsService = require('../../lib/sheets');
 const { fusoAtual } = require('../../lib/fuso');
+const setores = require('../../lib/setores');
 
 // Data no formato "dd/mm/aaaa", aceitando "d/m/aaaa", "aaaa-mm-dd" e data com hora
 function normalizarData(valor) {
@@ -49,7 +50,15 @@ module.exports = async function handler(req, res) {
       });
     }
     
-    const rowsBase = await sheetBase.getRows();
+    // Setorizado: só os registros do departamento do usuário (ou todos, se ele vê todos os setores)
+    const acesso = await setores.acessoAtual();
+    if (!acesso.logado) {
+      return res.status(401).json({ ok: false, msg: 'Sessão expirada. Faça login novamente.' });
+    }
+    const setorDe = await setores.resolvedorDeSetor();
+    const rowsBase = (await sheetBase.getRows()).filter(row =>
+      acesso.todos || acesso.permite(setorDe(row.get('Departamento'), row.get('Supervisor')))
+    );
     console.log(`[RESUMO-BASE] ✓ ${rowsBase.length} registros na Base`);
     
     // ===== CARREGA QLP =====
