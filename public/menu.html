@@ -514,7 +514,7 @@
             return `<div class="kpis">
                     ${kpi(cont('Aguardando início'), 'Aguardando', 'ambar')}
                     ${kpi(cont('Em conferência'), 'Em conferência', 'azul')}
-                    ${kpi(cont('Finalizado'), 'Finalizados', 'verde')}
+                    ${kpi(dados.filter(d => d['Etapa'] && d['Etapa'] !== 'Aguardando início' && d['Etapa'] !== 'Em conferência').length, 'Finalizados', 'verde')}
                 </div>
                 ${barra([
                     { rotulo: 'Agendados', valor: dados.filter(d => d['Status Agenda'] === 'Agendado').length, cor: '#9fd1b0' },

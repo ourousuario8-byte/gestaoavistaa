@@ -192,6 +192,8 @@
       if (m < 60) return `${m} min`;
       return `${Math.floor(m / 60)}h${m % 60 ? ' ' + String(m % 60).padStart(2, '0') + 'min' : ''}`;
     }
+    // Encerrado = qualquer status final ("Finalizado" ou a situação de quem finalizou direto pela agenda)
+    const encerrado = e => !!e && e !== 'Aguardando início' && e !== 'Em conferência';
     const media = lista => (lista.length ? lista.reduce((t, x) => t + x, 0) / lista.length : null);
 
     // Campos calculados de cada recebimento
@@ -384,7 +386,7 @@
       const fornecedores = new Set(r.map(x => x['Fornecedor']).filter(Boolean));
       const confs = r.map(x => x._conf).filter(v => v !== null);
       const esperas = r.map(x => x._espera).filter(v => v !== null);
-      const finalizados = r.filter(x => x['Etapa'] === 'Finalizado');
+      const finalizados = r.filter(x => encerrado(x['Etapa']));
       const comDiv = finalizados.filter(x => x['Divergência'] === 'Sim').length;
       const semAgenda = r.filter(x => x['Status Agenda'] === 'Sem agenda').length;
 
@@ -429,7 +431,7 @@
       // Fornecedores
       const porForn = agruparPor(r, 'Fornecedor');
       const linhasForn = [...porForn.entries()].map(([nome, l]) => {
-        const fin = l.filter(x => x['Etapa'] === 'Finalizado');
+        const fin = l.filter(x => encerrado(x['Etapa']));
         return {
           nome,
           qtd: l.length,
@@ -453,7 +455,7 @@
       // Conferentes
       const porConf = agruparPor(r, 'Conferente');
       const linhasConf = [...porConf.entries()].map(([nome, l]) => {
-        const fin = l.filter(x => x['Etapa'] === 'Finalizado');
+        const fin = l.filter(x => encerrado(x['Etapa']));
         return {
           nome,
           qtd: l.length,

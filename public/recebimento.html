@@ -296,7 +296,7 @@
 
             <div class="finalizar-direto">
               <h4><i class="fas fa-flag-checkered"></i> Finalizar carga direto</h4>
-              <div class="dica">Fecha o recebimento sem passar pelo conferente. Vai para a aba Recebimento como "Finalizado".</div>
+              <div class="dica">Fecha o recebimento sem passar pelo conferente. O status final do recebimento será a situação escolhida.</div>
               <div class="aviso" id="avisoFinalizada"></div>
               <div class="grade-final" id="camposFinalizar">
                 <div>
@@ -912,19 +912,24 @@
     }
 
     function classeEtapa(etapa) {
-      return { 'Aguardando início': 'aguardando', 'Em conferência': 'conferencia', 'Finalizado': 'finalizado' }[etapa] || 'aguardando';
+      return { 'Aguardando início': 'aguardando', 'Em conferência': 'conferencia' }[etapa] || 'finalizado';
     }
+
+    // Encerrado = qualquer status final ("Finalizado" ou a situação de quem finalizou direto pela agenda)
+    const encerrado = e => !!e && e !== 'Aguardando início' && e !== 'Em conferência';
 
     function renderRecebimentos() {
       const etapa = $('filtroEtapa').value;
-      const dados = etapa ? recebimentos.filter(r => r['Etapa'] === etapa) : recebimentos;
+      const dados = !etapa ? recebimentos
+        : etapa === 'Finalizado' ? recebimentos.filter(r => encerrado(r['Etapa']))
+        : recebimentos.filter(r => r['Etapa'] === etapa);
       const cont = e => recebimentos.filter(r => r['Etapa'] === e).length;
 
       $('resumo').innerHTML =
         `<span><strong>${recebimentos.length}</strong> recebimento(s)</span>` +
         `<span class="badge-sem"><strong>${cont('Aguardando início')}</strong> aguardando início</span>` +
         `<span class="badge-primary"><strong>${cont('Em conferência')}</strong> em conferência</span>` +
-        `<span class="badge-ok"><strong>${cont('Finalizado')}</strong> finalizado(s)</span>` +
+        `<span class="badge-ok"><strong>${recebimentos.filter(r => encerrado(r['Etapa'])).length}</strong> finalizado(s)</span>` +
         `<span><strong>${recebimentos.filter(r => r['Status Agenda'] === 'Sem agenda').length}</strong> sem agenda</span>`;
 
       $('tbody').innerHTML = dados.length ? dados.map(r => {
