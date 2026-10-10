@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <script src="/js/fuso.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Painel de Presença</title>
@@ -686,7 +687,7 @@ document.addEventListener('DOMContentLoaded',function(){
   });
 });
 
-// Grupo e turno definidos pelo próprio usuário em "Meu usuário" (/perfil).
+// Grupo e turno definidos pelo próprio usuário no seu Perfil (/perfil).
 // Sem grupo definido, continua usando a área escolhida no menu.
 async function carregarPerfil(){
   try{
@@ -715,7 +716,7 @@ window.onload=async function(){
   }
   await carregarPerfil();
   if(!aba){
-    alert('Defina o grupo da sua lista de presença em "Meu usuário".');
+    alert('Defina o grupo da sua lista de presença no seu Perfil.');
     window.location.href='/perfil';
     return;
   }
