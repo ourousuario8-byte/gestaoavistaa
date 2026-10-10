@@ -269,6 +269,7 @@ function exibirBusca(lista){
       item.innerHTML=`
         <div class="item-info">
           <strong>${c.matricula}</strong> - ${c.nome}
+          ${c.departamento||c.situacao?`<small style="display:block;color:var(--muted);font-size:12px">${[c.departamento,c.situacao].filter(Boolean).join(' · ')}</small>`:''}
         </div>
         <button class="btn-primary" onclick='add(${JSON.stringify(c.matricula)},${JSON.stringify(c.nome)},${JSON.stringify(c.funcao||"")})'>
           <i class="fas fa-plus"></i> Adicionar

@@ -1,4 +1,6 @@
 const sheetsService = require('../lib/sheets');
+const setores = require('../lib/setores');
+const { fusoAtual, tokenAtual } = require('../lib/fuso');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -34,8 +36,19 @@ module.exports = async function handler(req, res) {
           });
         }
 
+        // Setorização: a importação substitui só as linhas dos setores do usuário;
+        // as linhas de outros setores continuam na aba
+        const colDepartamento = await setores.colunaDepartamento(sheet);
+        const departamento = await setores.setorParaGravar();
+        const regra = await setores.regraDeAcesso();
+        if (!regra.ok) return res.status(401).json({ ok: false, msg: 'Sessão expirada. Faça login novamente.' });
+        const outrosSetores = (await sheet.getRows())
+          .filter(row => String(row.get(colDepartamento) || '').trim() && !regra.permite({ departamento: row.get(colDepartamento) }))
+          .map(row => row.toObject());
+
         await sheet.clearRows();
-        await sheet.addRows(dados.map(d => ({
+        await sheet.addRows([...outrosSetores, ...dados.map(d => ({
+          [colDepartamento]: departamento,
           'carga': d.carga,
           'dep': d.dep,
           'box': d.box,
@@ -49,7 +62,7 @@ module.exports = async function handler(req, res) {
           'numero volume': d.numeroVolume,
           'operacao': d.operacao,
           'tempo geracao': d.tempoGeracao
-        })));
+        }))]);
 
         return res.status(200).json({ ok: true, msg: `${dados.length} linhas importadas` });
       }
@@ -62,7 +75,10 @@ module.exports = async function handler(req, res) {
           return res.status(200).json({ ok: true, dados: [] });
         }
 
-        const rows = await sheet.getRows();
+        const regra = await setores.regraDeAcesso();
+        if (!regra.ok) return res.status(401).json({ ok: false, msg: 'Sessão expirada. Faça login novamente.' });
+        const rows = (await sheet.getRows())
+          .filter(row => regra.permite({ departamento: row.get('Departamento'), semDonoVisivel: true }));
         const dados = rows.map(row => ({
           carga: String(row.get('carga') || ''),
           dep: String(row.get('dep') || ''),
@@ -90,11 +106,15 @@ module.exports = async function handler(req, res) {
           return res.status(200).json({ ok: true, distribuicao: {} });
         }
 
+        const regra = await setores.regraDeAcesso();
+        if (!regra.ok) return res.status(401).json({ ok: false, msg: 'Sessão expirada. Faça login novamente.' });
         const rows = await sheet.getRows();
         const distribuicao = {};
 
         rows.forEach(row => {
           const sup = String(row.get('Supervisor') || '').trim();
+          // Setorização: só supervisores dos setores do usuário
+          if (!regra.permite({ departamento: row.get('Departamento'), usuario: sup })) return;
           const linha1 = String(row.get('Linha 1') || '').trim();
           const linha2 = String(row.get('Linha 2') || '').trim();
 
@@ -125,7 +145,9 @@ module.exports = async function handler(req, res) {
           });
         }
 
-        const hoje = new Date().toLocaleDateString('pt-BR');
+        const hoje = new Date().toLocaleDateString('pt-BR', { timeZone: fusoAtual() });
+        const colDepartamento = await setores.colunaDepartamento(sheet);
+        const departamento = await setores.setorParaGravar();
         const registros = [];
 
         for (const sup in dados) {
@@ -139,7 +161,8 @@ module.exports = async function handler(req, res) {
               'Volume': linha.volume,
               'Peso': linha.peso,
               'Colaboradores Sugeridos': linha.colasSugeridos,
-              'Media Itens': linha.mediaItens
+              'Media Itens': linha.mediaItens,
+              [colDepartamento]: departamento,
             });
           });
         }
@@ -152,7 +175,11 @@ module.exports = async function handler(req, res) {
       case 'obterPresenca': {
         const dataRef = data || new Date().toISOString().split('T')[0];
         
-        const resBase = await fetch(`${req.headers.host}/api/producao/resumo-base?modo=dados&data=${dataRef}`);
+        // Repassa a sessão e o fuso: o resumo já vem filtrado pelos setores do usuário
+        const protocolo = (req.headers['x-forwarded-proto'] || 'https').split(',')[0];
+        const resBase = await fetch(`${protocolo}://${req.headers.host}/api/producao/resumo-base?modo=dados&data=${dataRef}`, {
+          headers: { 'X-Token': tokenAtual(), 'X-Fuso-Horario': fusoAtual() },
+        });
         const resultBase = await resBase.json();
 
         if (!resultBase.ok) {
