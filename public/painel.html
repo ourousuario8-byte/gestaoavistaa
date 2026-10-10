@@ -421,7 +421,7 @@ function renderTabela(lista){
         <td><strong>${c.matricula}</strong></td>
         <td>${c.nome}</td>
         <td>
-          <select onchange="atualizarStatus('${c.matricula}',this)" style="width:100%;">
+          <select class="sel-status" onchange="atualizarStatus('${c.matricula}',this)" style="width:100%;">
             <option value="" ${!c.status?"selected":""}>-- Selecione --</option>
             <option value="Presente" ${c.status==="Presente"?"selected":""}>✅ Presente</option>
             <option value="Ausente" ${c.status==="Ausente"?"selected":""}>❌ Ausente</option>
@@ -433,7 +433,7 @@ function renderTabela(lista){
           </select>
         </td>
         <td>
-          <select onchange="atualizarDesvio('${c.matricula}',this)" style="width:100%;">
+          <select class="sel-desvio" onchange="atualizarDesvio('${c.matricula}',this)" style="width:100%;">
             <option value="" ${!c.desvio?"selected":""}>-- Sem Desvio --</option>
             <option value="Desvio" ${c.desvio==="Desvio"?"selected":""}>🔄 Desvio</option>
           </select>
@@ -460,7 +460,7 @@ async function atualizarStatus(matricula,selectEl){
   if(bufferMemoria[matricula]) bufferMemoria[matricula].status = novoStatus;
 
   try{
-    await fetch('/api/colaboradores',{
+    const resp=await fetch('/api/colaboradores',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -470,10 +470,12 @@ async function atualizarStatus(matricula,selectEl){
         status:novoStatus
       })
     });
+    const r=await resp.json().catch(()=>({}));
+    if(!resp.ok||!r.ok) throw new Error(r.msg||'Falha ao gravar na Lista');
     showStatus(`Status atualizado: ${novoStatus||'Vazio'}`,'success');
   }catch(error){
     console.error('Erro ao atualizar status:',error);
-    showStatus('Erro ao atualizar status','error');
+    showStatus(`Erro ao atualizar status: ${error.message}`,'error');
   }
 }
 
@@ -484,7 +486,7 @@ async function atualizarDesvio(matricula,selectEl){
   if(bufferMemoria[matricula]) bufferMemoria[matricula].desvio = novoDesvio;
 
   try{
-    await fetch('/api/colaboradores',{
+    const resp=await fetch('/api/colaboradores',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -494,10 +496,12 @@ async function atualizarDesvio(matricula,selectEl){
         desvio:novoDesvio
       })
     });
+    const r=await resp.json().catch(()=>({}));
+    if(!resp.ok||!r.ok) throw new Error(r.msg||'Falha ao gravar na Lista');
     showStatus(`Desvio atualizado: ${novoDesvio||'Sem Desvio'}`,'success');
   }catch(error){
     console.error('Erro ao atualizar desvio:',error);
-    showStatus('Erro ao atualizar desvio','error');
+    showStatus(`Erro ao atualizar desvio: ${error.message}`,'error');
   }
 }
 
@@ -596,8 +600,8 @@ async function confirmarSalvar(){
 
       if(tr){
         // Lê o valor atual do select de status (o usuário pode ter mudado sem acionar o evento)
-        const selStatus = tr.querySelector('select:nth-of-type(1)');
-        const selDesvio = tr.querySelector('select:nth-of-type(2)');
+        const selStatus = tr.querySelector('.sel-status');
+        const selDesvio = tr.querySelector('.sel-desvio');
         if(selStatus) statusFinal = selStatus.value;
         if(selDesvio) desvioFinal = selDesvio.value;
       }
