@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meu usuário</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="/css/tema.css" rel="stylesheet">
+  <style>
+    .container { max-width: 640px; }
+    .campo { margin-bottom: 18px; }
+    .usuario-topo { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    .avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: var(--primary-soft); color: var(--primary-text);
+      display: grid; place-items: center; font-size: 20px; font-weight: 700; flex-shrink: 0;
+    }
+    .usuario-topo strong { font-size: 18px; font-weight: 600; display: block; }
+    .usuario-topo small { color: var(--muted); font-size: 13px; }
+    .secao { border-top: 1px dashed var(--border); padding-top: 18px; margin-top: 4px; }
+    .secao h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+    .secao > .dica { margin-bottom: 14px; }
+    .grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    @media (max-width: 560px) { .grade { grid-template-columns: 1fr; } }
+    .acoes { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+    .acoes .btn { flex: 1; justify-content: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1><i class="fas fa-user-cog"></i> Meu usuário</h1>
+        <p>Grupo da lista de presença, turno e senha</p>
+      </div>
+      <div class="nav">
+        <a href="/menu"><i class="fas fa-arrow-left"></i> Menu</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="usuario-topo">
+        <div class="avatar" id="avatar">?</div>
+        <div>
+          <strong id="nomeUsuario">Carregando...</strong>
+          <small>Você só pode alterar os seus próprios dados</small>
+        </div>
+      </div>
+
+      <form id="form" autocomplete="off">
+        <div class="grade">
+          <div class="campo">
+            <label for="grupo">Grupo da lista de presença <span class="obrig">*</span></label>
+            <input type="text" id="grupo" list="listaGrupos" placeholder="Ex.: WMS TA" required>
+            <datalist id="listaGrupos"></datalist>
+            <div class="dica">Sua lista de colaboradores acompanha o grupo.</div>
+          </div>
+          <div class="campo">
+            <label for="turno">Turno <span class="obrig">*</span></label>
+            <input type="text" id="turno" list="listaTurnos" placeholder="Ex.: 1º Turno" required>
+            <datalist id="listaTurnos"></datalist>
+            <div class="dica">Vai para a coluna Turno da aba Base.</div>
+          </div>
+        </div>
+
+        <div class="secao">
+          <h3><i class="fas fa-key"></i> Alterar senha</h3>
+          <div class="dica">Deixe em branco para manter a senha atual.</div>
+          <div class="campo">
+            <label for="senhaAtual">Senha atual</label>
+            <input type="password" id="senhaAtual" autocomplete="current-password">
+          </div>
+          <div class="grade">
+            <div class="campo">
+              <label for="novaSenha">Nova senha</label>
+              <input type="password" id="novaSenha" autocomplete="new-password">
+            </div>
+            <div class="campo">
+              <label for="confirmarSenha">Confirmar nova senha</label>
+              <input type="password" id="confirmarSenha" autocomplete="new-password">
+            </div>
+          </div>
+        </div>
+
+        <div class="acoes">
+          <button type="submit" class="btn btn-primary" id="btnSalvar"><i class="fas fa-save"></i> Salvar</button>
+        </div>
+        <div class="status" id="status"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const token = sessionStorage.getItem('token');
+
+    function esc(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function showStatus(msg, tipo) {
+      $('status').innerHTML = msg;
+      $('status').className = `status show ${tipo}`;
+    }
+
+    async function api(body) {
+      const resp = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, token }),
+      });
+      const r = await resp.json().catch(() => ({ ok: false, msg: `Erro HTTP ${resp.status}` }));
+      if (resp.status === 401) {
+        showStatus('<i class="fas fa-exclamation-triangle"></i> Sessão expirada. Redirecionando para o login...', 'error');
+        setTimeout(() => { window.location.href = '/'; }, 1500);
+      }
+      return r;
+    }
+
+    async function carregar() {
+      if (!token) {
+        window.location.href = '/';
+        return;
+      }
+      const r = await api({ action: 'meuPerfil' });
+      if (!r.ok) {
+        showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(r.msg || 'Erro ao carregar')}`, 'error');
+        return;
+      }
+      $('nomeUsuario').textContent = r.usuario;
+      $('avatar').textContent = (r.usuario || '?').charAt(0).toUpperCase();
+      $('grupo').value = r.grupo || '';
+      $('turno').value = r.turno || '';
+      $('listaGrupos').innerHTML = (r.grupos || []).map(g => `<option value="${esc(g)}">`).join('');
+      $('listaTurnos').innerHTML = (r.turnos || []).map(t => `<option value="${esc(t)}">`).join('');
+    }
+
+    $('form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const grupo = $('grupo').value.trim();
+      const turno = $('turno').value.trim();
+      const senhaAtual = $('senhaAtual').value;
+      const novaSenha = $('novaSenha').value;
+
+      if (!grupo) return showStatus('Informe o grupo da lista de presença.', 'error');
+      if (!turno) return showStatus('Informe o turno.', 'error');
+      if (novaSenha || $('confirmarSenha').value) {
+        if (!senhaAtual) return showStatus('Informe a senha atual para trocar a senha.', 'error');
+        if (novaSenha !== $('confirmarSenha').value) return showStatus('A confirmação não confere com a nova senha.', 'error');
+      }
+
+      const btn = $('btnSalvar');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+      try {
+        const r = await api({ action: 'salvarPerfil', grupo, turno, senhaAtual, novaSenha });
+        if (!r.ok) throw new Error(r.msg || 'Erro ao salvar');
+        ['senhaAtual', 'novaSenha', 'confirmarSenha'].forEach(id => { $(id).value = ''; });
+        showStatus(`<i class="fas fa-check-circle"></i> ${esc(r.msg)}`, 'success');
+      } catch (err) {
+        showStatus(`<i class="fas fa-exclamation-triangle"></i> ${esc(err.message)}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Salvar';
+      }
+    });
+
+    carregar();
+  </script>
+</body>
+</html>

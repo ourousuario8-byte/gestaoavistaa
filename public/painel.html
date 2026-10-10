@@ -120,7 +120,9 @@ td select { padding: 8px 32px 8px 10px; font-size: 14px; min-width: 130px; }
 <h2><i class="fas fa-users"></i> Painel de Presença</h2>
 <div class="info">
 <strong>Supervisor:</strong> <span id="supervisorName">Carregando...</span> | 
-<strong>Área:</strong> <span id="areaSelecionada">Carregando...</span>
+<strong>Grupo:</strong> <span id="areaSelecionada">Carregando...</span> |
+<strong>Turno:</strong> <span id="turnoUsuario">-</span>
+<a href="/perfil" style="margin-left:6px;font-size:13px"><i class="fas fa-user-cog"></i> Alterar</a>
 </div>
 </div>
 </div>
@@ -185,6 +187,7 @@ td select { padding: 8px 32px 8px 10px; font-size: 14px; min-width: 130px; }
 <script>
 let supervisor='';
 let aba='';
+let turno='';
 let adicionando={};
 let salvando=false;
 
@@ -198,7 +201,7 @@ function initializeData(){
   aba=sessionStorage.getItem('abaSelecionada')||'';
   if(supervisor)document.getElementById('supervisorName').textContent=supervisor;
   if(aba)document.getElementById('areaSelecionada').textContent=aba;
-  return supervisor&&aba;
+  return !!supervisor;
 }
 
 async function buscar(){
@@ -613,7 +616,8 @@ async function confirmarSalvar(){
         c.nome,               // [3] Nome
         c.funcao || '',       // [4] Função
         statusFinal || '',    // [5] Status
-        desvioFinal || ''     // [6] Desvio
+        desvioFinal || '',    // [6] Desvio
+        turno                 // [7] Turno (do perfil do usuário)
       ];
     });
 
@@ -682,10 +686,37 @@ document.addEventListener('DOMContentLoaded',function(){
   });
 });
 
-window.onload=function(){
+// Grupo e turno definidos pelo próprio usuário em "Meu usuário" (/perfil).
+// Sem grupo definido, continua usando a área escolhida no menu.
+async function carregarPerfil(){
+  try{
+    const token=sessionStorage.getItem('token');
+    if(!token)return;
+    const resp=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'meuPerfil',token})});
+    const r=await resp.json();
+    if(!r.ok)return;
+    if(r.grupo){
+      aba=r.grupo;
+      document.getElementById('areaSelecionada').textContent=aba;
+    }
+    turno=r.turno||'';
+    document.getElementById('turnoUsuario').textContent=turno||'Não definido';
+  }catch(e){
+    console.warn('Perfil não carregado:',e);
+  }
+}
+
+window.onload=async function(){
   if(!initializeData()){
     alert('Dados da sessão não encontrados. Redirecionando para login...');
     window.location.href='/';
+    return;
+  }
+  await carregarPerfil();
+  if(!aba){
+    alert('Defina o grupo da sua lista de presença em "Meu usuário".');
+    window.location.href='/perfil';
     return;
   }
   atualizarTabela();

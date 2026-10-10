@@ -34,7 +34,7 @@ const pages = [
   'menu', 'ferramentas', 'painel', 'qlp', 'producao',
   'resumo-base', 'mapacarga', 'avaria', 'alocacaobox',
   'controle-coletores', 'resumo-equipamentos',
-  'Linha_distribuição', 'recebimento', 'recebimento-agenda', 'usuarios'
+  'Linha_distribuição', 'recebimento', 'recebimento-agenda', 'usuarios', 'perfil'
 ];
 
 pages.forEach(page => {
