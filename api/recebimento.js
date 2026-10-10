@@ -56,6 +56,10 @@ module.exports = async function handler(req, res) {
       case 'registrarFim':
         return res.status(200).json(await sheetsRecebimento.registrarFim(req.body || {}));
 
+      // Correção feita pelo próprio usuário que registrou o recebimento
+      case 'corrigirRecebimento':
+        return res.status(200).json(await sheetsRecebimento.corrigirRecebimento(req.body || {}));
+
       case 'atualizarCarga':
         return res.status(200).json(await sheetsRecebimento.atualizarCarga(req.body || {}));
 

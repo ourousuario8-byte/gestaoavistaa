@@ -1,5 +1,6 @@
 // api/colaboradores.js - COM SUPORTE A VALIDAÇÃO POR ABA - COMPLETO
 const sheetsService = require('../lib/sheets');
+const setores = require('../lib/setores');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -34,7 +35,28 @@ module.exports = async function handler(req, res) {
       console.log('[API COLABORADORES] Action:', action);
       console.log('[API COLABORADORES] Body completo:', JSON.stringify(req.body, null, 2));
 
+      // Alterar a lista de outro supervisor: com sessão, o supervisor tem de ser o usuário logado
+      if (['updateStatus', 'updateDesvio', 'removeBuffer', 'addBuffer'].includes(action)) {
+        const acesso = await setores.acessoAtual();
+        if (acesso.logado && req.body.supervisor && req.body.supervisor !== acesso.usuario) {
+          return res.status(403).json({ ok: false, msg: 'Você só pode alterar a sua própria lista' });
+        }
+      }
+
       switch (action) {
+        // ===== Correções pelo próprio usuário =====
+        case 'minhaBase':
+          return res.status(200).json(await sheetsService.minhaBase(req.body.data));
+
+        case 'corrigirBase':
+          return res.status(200).json(await sheetsService.corrigirBase(req.body));
+
+        case 'excluirDaBase':
+          return res.status(200).json(await sheetsService.excluirDaBase(req.body));
+
+        case 'corrigirLista':
+          return res.status(200).json(await sheetsService.corrigirLista(req.body));
+
         case 'addBuffer': {
           const { supervisor, aba, colaborador } = req.body;
           
