@@ -31,6 +31,11 @@
   status = 200
 
 [[redirects]]
+  from = "/qlp-importar"
+  to = "/qlp-importar.html"
+  status = 200
+
+[[redirects]]
   from = "/producao"
   to = "/producao.html"
   status = 200

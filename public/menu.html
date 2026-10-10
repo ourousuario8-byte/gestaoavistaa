@@ -314,6 +314,7 @@
             { termos: ['resumo equipamentos', 'resumo de equipamentos', 'painel equipamentos'], url: '/resumo-equipamentos' },
             { termos: ['controle de equipamentos', 'coletor', 'rfid'],          url: '/controle-coletores' },
             { termos: ['producao', 'produtividade', 'calculadora'],             url: '/producao' },
+            { termos: ['importar qlp'],                                         url: '/qlp-importar' },
             { termos: ['qlp'],                                                  url: '/qlp' },
             { termos: ['mapa de carga'],                                        url: '/mapacarga' },
             { termos: ['alocacao box'],                                         url: '/alocacaobox' },
@@ -330,6 +331,7 @@
         }
 
         const ICONES = [
+            ['importar qlp', 'fa-file-upload'],
             ['usuarios', 'fa-user-shield'], ['recebimento', 'fa-truck'], ['agenda', 'fa-file-excel'],
             ['resumo de colaboradores', 'fa-chart-pie'], ['resumo colaboradores', 'fa-chart-pie'], ['resumo base', 'fa-chart-pie'],
             ['equipamentos', 'fa-barcode'], ['coletor', 'fa-barcode'], ['producao', 'fa-calculator'],
@@ -385,7 +387,7 @@
             { id: 'colaboradores', titulo: 'Resumo de Colaboradores', sub: 'Presença de hoje', icone: 'fa-chart-pie', cor: 'primary', url: '/resumo-base',
               termos: ['resumo de colaboradores', 'resumo colaboradores', 'resumo base', 'resumo presenca', 'resumo de presenca'], carregar: carregarColaboradores },
             { id: 'qlp', titulo: 'QLP', sub: 'Quadro, absenteísmo e abandono', icone: 'fa-chart-bar', cor: 'peach', url: '/qlp',
-              termos: ['qlp'], carregar: carregarQLP },
+              termos: ['qlp'], exceto: ['importar qlp'], carregar: carregarQLP },
             { id: 'equipamentos', titulo: 'Equipamentos', sub: 'Coletores e chaves', icone: 'fa-barcode', cor: 'blue', url: '/resumo-equipamentos',
               termos: ['resumo equipamentos', 'resumo de equipamentos', 'painel equipamentos', 'controle de equipamentos', 'coletor', 'rfid'], carregar: carregarEquipamentos },
             { id: 'avaria', titulo: 'Avaria', sub: 'Registros de hoje', icone: 'fa-box-open', cor: 'red', url: '/avaria',
@@ -398,6 +400,8 @@
         function liberado(modulo) {
             return areasSelecionadas.some(area => {
                 const a = semAcento(area);
+                // "Importar QLP" só libera a importação, não o painel do QLP
+                if ((modulo.exceto || []).some(t => a.includes(t))) return false;
                 return modulo.termos.some(t => a.includes(t));
             });
         }
