@@ -102,8 +102,9 @@
         .nav-item.ativo i { color: var(--primary-text); }
 
         .lateral-rodape { padding: 10px; border-top: 1px solid var(--border); }
-        .lateral-rodape .nav-item { color: var(--red); }
-        .lateral-rodape .nav-item i { color: var(--red); }
+        a.nav-item { text-decoration: none; }
+        .lateral-rodape button.nav-item { color: var(--red); }
+        .lateral-rodape button.nav-item i { color: var(--red); }
 
         /* Recolhida: só ícones */
         .app.recolhido .lateral { width: 72px; }
@@ -260,6 +261,7 @@
             <nav class="nav-lista" id="navAreas"></nav>
 
             <div class="lateral-rodape">
+                <a class="nav-item" href="/perfil" title="Meu usuário"><i class="fas fa-user-cog"></i><span>Meu usuário</span></a>
                 <button class="nav-item" onclick="sair()"><i class="fas fa-sign-out-alt"></i><span>Sair</span></button>
             </div>
         </aside>

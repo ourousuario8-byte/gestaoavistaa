@@ -76,6 +76,11 @@
   status = 200
 
 [[redirects]]
+  from = "/perfil"
+  to = "/perfil.html"
+  status = 200
+
+[[redirects]]
   from = "/usuarios"
   to = "/usuarios.html"
   status = 200

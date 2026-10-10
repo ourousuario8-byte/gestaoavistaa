@@ -59,6 +59,23 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, usuario: sessao.usuario, abas });
     }
 
+    // MEU USUÁRIO: o próprio usuário vê e altera só grupo, turno e senha.
+    // O usuário vem do token da sessão (nunca do corpo da requisição).
+    if (action === 'meuPerfil' || action === 'salvarPerfil') {
+      const sessao = validarToken(req.body.token);
+      if (!sessao) return res.status(401).json({ ok: false, msg: 'Sessão expirada. Faça login novamente.' });
+      const usuariosService = require('../lib/usuarios');
+      const resultado = action === 'meuPerfil'
+        ? await usuariosService.meuPerfil(sessao.usuario)
+        : await usuariosService.salvarPerfil(sessao.usuario, {
+            grupo: req.body.grupo,
+            turno: req.body.turno,
+            senhaAtual: req.body.senhaAtual,
+            novaSenha: req.body.novaSenha,
+          });
+      return res.status(200).json(resultado);
+    }
+
     // TESTE DE CONEXÃO
     if (action === 'test') {
       console.log('[AUTH] Testando conexão com Google Sheets...');
