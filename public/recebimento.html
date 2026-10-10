@@ -30,6 +30,7 @@
 
     .hora-linha { display: flex; gap: 8px; }
     .hora-linha .btn { flex-shrink: 0; }
+    .hora-linha input { flex: 1; min-width: 0; }
 
     .sugestoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
     .sugestoes .rot { font-size: 12px; color: var(--muted); }
@@ -85,6 +86,12 @@
 
     .modal-content .campo { margin-bottom: 14px; }
     .modal-content textarea { min-height: 90px; resize: vertical; }
+    .linha-finalizada td { background: var(--green-soft); }
+    .finalizar-direto { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 14px; }
+    .finalizar-direto h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .finalizar-direto .grade-final { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
+    .finalizar-direto .grade-final .largo { grid-column: 1 / -1; }
+    @media (max-width: 520px) { .finalizar-direto .grade-final { grid-template-columns: 1fr; } }
     .link-btn { background: none; border: none; color: var(--primary-text); cursor: pointer; font-size: 13px; padding: 4px; }
   </style>
 </head>
@@ -285,10 +292,39 @@
               <textarea id="editarObservacao" placeholder="Ex.: chega com 2 carretas, descarga lateral..."></textarea>
               <div class="dica">Vai para a coluna "Obs. Agenda" do recebimento desse fornecedor.</div>
             </div>
+
+            <div class="finalizar-direto">
+              <h4><i class="fas fa-flag-checkered"></i> Finalizar carga direto</h4>
+              <div class="dica">Fecha o recebimento sem passar pelo conferente. Vai para a aba Recebimento como "Finalizado".</div>
+              <div class="aviso" id="avisoFinalizada"></div>
+              <div class="grade-final" id="camposFinalizar">
+                <div>
+                  <label for="finalSituacao">Situação <span class="obrig">*</span></label>
+                  <select id="finalSituacao" data-busca data-placeholder="Selecione a situação"></select>
+                </div>
+                <div>
+                  <label for="finalHora">Hora</label>
+                  <div class="hora-linha">
+                    <input type="time" id="finalHora">
+                    <button type="button" class="btn btn-secondary btn-sm" data-agora="finalHora" title="Agora"><i class="fas fa-clock"></i></button>
+                  </div>
+                </div>
+                <div class="largo oculto" id="campoFinalObs">
+                  <label for="finalObservacoes">Observações do problema</label>
+                  <select id="finalObservacoes" multiple data-placeholder="Selecione se precisar detalhar"></select>
+                </div>
+                <div class="largo">
+                  <label for="finalCarga">Número da carga</label>
+                  <input type="text" id="finalCarga" placeholder="Opcional">
+                </div>
+              </div>
+            </div>
+
             <div class="status" id="statusEditarAgenda"></div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-fechar-modal>Cancelar</button>
+            <button type="button" class="btn btn-success" id="btnFinalizarDireto"><i class="fas fa-flag-checkered"></i> Finalizar carga</button>
             <button type="submit" class="btn btn-primary" id="btnSalvarAgenda"><i class="fas fa-save"></i> Salvar</button>
           </div>
         </form>
@@ -427,6 +463,7 @@
       // Na agenda salva (não na pré-visualização do arquivo) cada linha pode ser editada
       const editavel = !!tabelaAgenda.numeros;
       const idxObs = tabelaAgenda.headers.indexOf('Observação Agenda');
+      const idxFinal = tabelaAgenda.headers.indexOf('Finalizada Direto');
       const colunas = tabelaAgenda.headers.length + (editavel ? 1 : 0);
 
       $('theadAgenda').innerHTML = tabelaAgenda.headers.length
@@ -434,8 +471,9 @@
       $('tbodyAgenda').innerHTML = linhas.length
         ? linhas.slice(0, 1000).map(l => {
             const num = editavel ? tabelaAgenda.numeros[tabelaAgenda.linhas.indexOf(l)] : null;
-            return `<tr${idxObs !== -1 && l[idxObs] ? ' class="linha-com-obs"' : ''}>` +
-              (editavel ? `<td class="col-acao"><button class="link-btn" data-editar-agenda="${num}" title="Editar fornecedor e observação"><i class="fas fa-pen"></i></button></td>` : '') +
+            const classe = idxFinal !== -1 && l[idxFinal] ? 'linha-finalizada' : (idxObs !== -1 && l[idxObs] ? 'linha-com-obs' : '');
+            return `<tr${classe ? ` class="${classe}"` : ''}>` +
+              (editavel ? `<td class="col-acao"><button class="link-btn" data-editar-agenda="${num}" title="Editar fornecedor, observação ou finalizar a carga"><i class="fas fa-pen"></i></button></td>` : '') +
               tabelaAgenda.headers.map((_, i) => `<td>${esc(l[i])}</td>`).join('') + '</tr>';
           }).join('')
         : `<tr><td class="vazio" colspan="${colunas || 1}">Nenhum registro</td></tr>`;
@@ -560,6 +598,20 @@
       $('editarFornecedor').value = idxForn === -1 ? '' : linha[idxForn];
       $('editarObservacao').value = idxObs === -1 ? '' : linha[idxObs];
       $('listaFornecedoresAgenda').innerHTML = (opcoes.fornecedores || []).map(f => `<option value="${esc(f)}">`).join('');
+
+      // Finalização direta: limpa os campos e avisa se a carga já foi finalizada
+      const idxFinal = tabelaAgenda.headers.indexOf('Finalizada Direto');
+      const finalizada = idxFinal === -1 ? '' : linha[idxFinal];
+      originalAgenda = { fornecedor: $('editarFornecedor').value, observacao: $('editarObservacao').value };
+      $('finalSituacao').value = '';
+      desmarcar($('finalObservacoes'));
+      $('finalCarga').value = '';
+      $('finalHora').value = horaAtual();
+      atualizarFinalProblema();
+      $('avisoFinalizada').className = finalizada ? 'aviso show ok' : 'aviso';
+      $('avisoFinalizada').innerHTML = finalizada ? `<i class="fas fa-check-circle"></i> Carga já finalizada: ${esc(finalizada)}` : '';
+      $('camposFinalizar').classList.toggle('oculto', !!finalizada);
+      $('btnFinalizarDireto').classList.toggle('oculto', !!finalizada);
       limparStatus('statusEditarAgenda');
       $('modalAgenda').classList.add('active');
       $('editarObservacao').focus();
@@ -601,6 +653,52 @@
       }
     });
 
+    // ===== Finalizar carga direto (sem conferente) =====
+    let originalAgenda = { fornecedor: '', observacao: '' };
+
+    function atualizarFinalProblema() {
+      const situacao = $('finalSituacao').value;
+      $('campoFinalObs').classList.toggle('oculto', !situacao || situacoesOk.has(situacao));
+    }
+    $('finalSituacao').addEventListener('change', atualizarFinalProblema);
+
+    $('btnFinalizarDireto').addEventListener('click', async () => {
+      const situacao = $('finalSituacao').value;
+      if (!situacao) return showStatus('statusEditarAgenda', 'Selecione a situação para finalizar.', 'error');
+      const fornecedor = $('editarFornecedor').value.trim();
+      if (!fornecedor) return showStatus('statusEditarAgenda', 'Informe o fornecedor.', 'error');
+
+      const btn = $('btnFinalizarDireto');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Finalizando...';
+      try {
+        // Salva antes o fornecedor/observação se foram alterados
+        const observacao = $('editarObservacao').value.trim();
+        if (fornecedor !== originalAgenda.fornecedor || observacao !== originalAgenda.observacao.trim()) {
+          const ed = await api({ action: 'editarAgenda', linha: linhaEditando, fornecedor, observacao });
+          if (!ed.ok) throw new Error(ed.msg);
+        }
+        const r = await api({
+          action: 'finalizarDireto',
+          linha: linhaEditando,
+          situacao,
+          hora: $('finalHora').value,
+          carga: $('finalCarga').value.trim(),
+          observacoes: situacoesOk.has(situacao) ? [] : valoresSelecionados($('finalObservacoes')),
+        });
+        if (!r.ok) throw new Error(r.msg);
+        fecharEdicaoAgenda();
+        showStatus('statusAgenda', `<i class="fas fa-check-circle"></i> ${esc(r.msg)}`, 'success');
+        await carregarAgenda();
+        carregarRecebimentos();
+      } catch (err) {
+        showStatus('statusEditarAgenda', `<i class="fas fa-exclamation-triangle"></i> ${esc(err.message)}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-flag-checkered"></i> Finalizar carga';
+      }
+    });
+
     // ===== Listas das abas =====
     async function carregarOpcoes() {
       try {
@@ -623,6 +721,8 @@
         });
         preencherSelect($('situacao'), (r.situacoes || []).map(sit => ({ valor: sit.nome, texto: sit.nome })));
         situacoesOk = new Set((r.situacoes || []).filter(sit => sit.ok).map(sit => sit.nome));
+        preencherSelect($('finalSituacao'), (r.situacoes || []).map(sit => ({ valor: sit.nome, texto: sit.nome })));
+        preencherSelect($('finalObservacoes'), r.observacoes || [], { vazio: false });
         atualizarProblema();
         preencherSelect($('observacoes'), r.observacoes || [], { vazio: false });
         preencherSelect($('qualDivergencia'), r.divergencias || [], { vazio: false });

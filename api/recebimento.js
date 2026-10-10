@@ -36,6 +36,9 @@ module.exports = async function handler(req, res) {
       case 'editarAgenda':
         return res.status(200).json(await sheetsRecebimento.editarAgenda(req.body || {}));
 
+      case 'finalizarDireto':
+        return res.status(200).json(await sheetsRecebimento.finalizarDireto(req.body || {}));
+
       case 'verificarAgenda': {
         const { fornecedor, notaFiscal } = req.body || {};
         const resultado = await sheetsRecebimento.cruzarComAgenda(
