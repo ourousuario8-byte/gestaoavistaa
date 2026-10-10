@@ -51,6 +51,35 @@
         .dropzone strong { color: var(--text); }
 
         .oculto { display: none !important; }
+
+        .filters {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: clamp(16px, 2.5vw, 22px);
+            margin-bottom: 20px;
+        }
+        .filters .filter-actions { align-items: center; }
+
+        .atalhos { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+        .atalho {
+            border: 1px solid var(--border-forte);
+            background: var(--surface);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 7px 14px;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            gap: 7px;
+            align-items: center;
+        }
+        .atalho:hover { background: var(--surface-2); }
+        .atalho.ativo[data-destaque="faltas"], .atalho.ativo[data-destaque="semsup"] { background: var(--amber-soft); color: var(--amber); border-color: transparent; }
+        .atalho.ativo[data-destaque="risco"], .atalho.ativo[data-destaque="abandono"] { background: var(--red-soft); color: var(--red); border-color: transparent; }
         .paginacao { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
         .carregando-tela { text-align: center; padding: 70px 20px; color: var(--muted); }
         .carregando-tela i { font-size: 34px; color: var(--primary); margin-bottom: 12px; display: block; }
@@ -109,6 +138,31 @@
                 </select>
             </div>
 
+            <!-- ===== FILTROS (valem para a tela toda) ===== -->
+            <div class="filters" data-filtros-aberto>
+                <div class="atalhos" id="atalhos">
+                    <span class="contador">Atalhos:</span>
+                    <button type="button" class="atalho" data-destaque="faltas"><i class="fas fa-user-clock"></i> Mais faltantes</button>
+                    <button type="button" class="atalho" data-destaque="risco"><i class="fas fa-exclamation-triangle"></i> Risco de abandono</button>
+                    <button type="button" class="atalho" data-destaque="abandono"><i class="fas fa-user-slash"></i> Em abandono</button>
+                    <button type="button" class="atalho" data-destaque="semsup"><i class="fas fa-user-tie"></i> Sem supervisor</button>
+                </div>
+                <div class="filters-row">
+                    <div class="filter-group"><label>Nome ou chapa</label><input type="text" id="fBusca" placeholder="Buscar colaborador..."></div>
+                    <div class="filter-group"><label>Supervisor</label><select id="fSupervisor" data-busca></select></div>
+                    <div class="filter-group"><label>Função</label><select id="fFuncao" data-busca></select></div>
+                    <div class="filter-group"><label>Departamento</label><select id="fDepto" data-busca></select></div>
+                    <div class="filter-group"><label>Loja / grupo</label><select id="fGrupo" data-busca></select></div>
+                    <div class="filter-group"><label>Seção</label><select id="fSecao" data-busca></select></div>
+                    <div class="filter-group"><label>Site</label><select id="fSite" data-busca></select></div>
+                    <div class="filter-group"><label>Situação</label><select id="fSituacao" data-busca></select></div>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-secondary" id="btnLimpar"><i class="fas fa-eraser"></i> Limpar filtros</button>
+                    <span class="contador" id="resumoFiltro"></span>
+                </div>
+            </div>
+
             <div class="kpis-qlp" id="kpis"></div>
 
             <!-- ===== ONDE ESTÃO ===== -->
@@ -151,36 +205,15 @@
             <div class="card">
                 <div class="toolbar">
                     <h2><i class="fas fa-users"></i> Colaboradores <small class="contador" id="contador"></small></h2>
-                </div>
-
-                <div class="filters">
-                    <div class="filters-row">
-                        <div class="filter-group"><label>Buscar</label><input type="text" id="fBusca" placeholder="Nome ou chapa..."></div>
-                        <div class="filter-group"><label>Site</label><select id="fSite" data-busca></select></div>
-                        <div class="filter-group"><label>Departamento</label><select id="fDepto" data-busca></select></div>
-                        <div class="filter-group"><label>Seção</label><select id="fSecao" data-busca></select></div>
-                        <div class="filter-group"><label>Supervisor</label><select id="fSupervisor" data-busca></select></div>
-                        <div class="filter-group"><label>Situação</label><select id="fSituacao" data-busca></select></div>
-                        <div class="filter-group"><label>Destaque</label>
-                            <select id="fDestaque">
-                                <option value="">Todos</option>
-                                <option value="abandono">Em abandono</option>
-                                <option value="risco">Risco de abandono</option>
-                                <option value="faltas">Com faltas no período</option>
-                                <option value="semsup">Sem supervisor</option>
-                            </select>
-                        </div>
-                        <div class="filter-group"><label>Ordenar por</label>
-                            <select id="fOrdem">
-                                <option value="nome" selected>Nome</option>
-                                <option value="consecutivas">Faltas consecutivas</option>
-                                <option value="absenteismo">Absenteísmo</option>
-                                <option value="presente">Dias presentes</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="filter-actions">
-                        <button class="btn btn-secondary" id="btnLimpar"><i class="fas fa-eraser"></i> Limpar filtros</button>
+                    <div class="filtros-linha">
+                        <label for="fOrdem" style="margin:0; white-space:nowrap" class="contador">Ordenar por</label>
+                        <select id="fOrdem" style="width:auto; min-width:190px">
+                            <option value="nome" selected>Nome</option>
+                            <option value="faltas">Mais faltas</option>
+                            <option value="consecutivas">Faltas consecutivas</option>
+                            <option value="absenteismo">Absenteísmo</option>
+                            <option value="presente">Dias presentes</option>
+                        </select>
                     </div>
                 </div>
 
@@ -249,20 +282,77 @@
             }
         }
 
+        // ===== Estatísticas do conjunto filtrado (mesma regra do servidor) =====
+        const pct = (parte, total) => total ? Math.round((parte / total) * 1000) / 10 : 0;
+
+        function estatisticas(lista) {
+            const agrupar = campo => {
+                const g = {};
+                lista.forEach(c => {
+                    const k = c[campo] || 'Não informado';
+                    const x = g[k] || (g[k] = { total: 0, ativos: 0, inativos: 0 });
+                    x.total++;
+                    if (c.ativo) x.ativos++; else x.inativos++;
+                });
+                return g;
+            };
+            const porSupervisor = {};
+            lista.filter(c => c.supervisor).forEach(c => {
+                const s = porSupervisor[c.supervisor] || (porSupervisor[c.supervisor] = { colaboradores: 0, diasPresente: 0, faltas: 0, atestados: 0, programados: 0, abandono: 0, riscoAbandono: 0 });
+                s.colaboradores++;
+                s.diasPresente += c.diasPresente;
+                s.faltas += c.faltas;
+                s.atestados += c.atestados;
+                s.programados += c.diasProgramados;
+                if (c.abandono) s.abandono++;
+                if (c.riscoAbandono) s.riscoAbandono++;
+            });
+            Object.values(porSupervisor).forEach(s => {
+                s.absenteismo = pct(s.faltas + s.atestados, s.programados);
+                s.taxaAbandono = pct(s.abandono, s.colaboradores);
+            });
+            const ativos = lista.filter(c => c.ativo).length;
+            const comPresenca = lista.filter(c => c.diasRegistrados > 0).length;
+            const emAbandono = lista.filter(c => c.abandono).length;
+            return {
+                total: lista.length,
+                ativos,
+                inativos: lista.length - ativos,
+                comSupervisor: lista.filter(c => c.supervisor).length,
+                comPresenca,
+                absenteismo: pct(lista.reduce((t, c) => t + c.faltas + c.atestados, 0), lista.reduce((t, c) => t + c.diasProgramados, 0)),
+                emAbandono,
+                taxaAbandono: pct(emAbandono, comPresenca || ativos),
+                riscoAbandono: lista.filter(c => c.riscoAbandono).length,
+                porSituacao: Object.fromEntries(Object.entries(agrupar('situacao')).map(([k, x]) => [k, x.total])),
+                porSite: agrupar('site'),
+                porDepartamento: agrupar('departamento'),
+                porSecao: agrupar('grupoSecao'),
+                porSupervisor,
+            };
+        }
+
         function renderTudo() {
-            const e = dados.estatisticas;
             const periodo = dados.periodoDias ? `últimos ${dados.periodoDias} dias` : 'todo o histórico';
             $('dataUpload').textContent = dados.dataUpload || '-';
             $('periodoSup').textContent = `· presença dos ${periodo}`;
+            preencherFiltros();
+            filtrar();
+        }
+
+        // Indicadores, onde estão e supervisores refletem os filtros
+        function renderPainel() {
+            const e = estatisticas(filtrados);
+            const periodo = dados.periodoDias ? `últimos ${dados.periodoDias} dias` : 'todo o histórico';
 
             $('kpis').innerHTML = [
-                ['', fmt(e.total), 'Quadro total', ''],
+                ['', fmt(e.total), 'Colaboradores', filtroAtivo() ? `de ${fmt(dados.colaboradores.length)} no quadro` : 'quadro total'],
                 ['verde', fmt(e.ativos), 'Ativos', `${fmt(e.inativos)} afastados/outros`],
                 ['azul', fmt(e.comSupervisor), 'Com supervisor', `${fmt(e.comPresenca)} com presença registrada`],
                 ['ambar', `${e.absenteismo}%`, 'Absenteísmo', `faltas + atestados · ${periodo}`],
                 ['vermelho', `${e.taxaAbandono}%`, 'Abandono', `${fmt(e.emAbandono)} colaborador(es)`],
                 ['vermelho', fmt(e.riscoAbandono), 'Risco de abandono', `${dados.limiteRiscoAbandono}+ faltas seguidas`],
-            ].map(([cor, v, r, s]) => `<div class="kpi-qlp ${cor}"><div class="v">${v}</div><div class="r">${r}</div>${s ? `<small>${s}</small>` : ''}</div>`).join('');
+            ].map(([cor, v, r, sub]) => `<div class="kpi-qlp ${cor}"><div class="v">${v}</div><div class="r">${r}</div>${sub ? `<small>${sub}</small>` : ''}</div>`).join('');
 
             const linhaGrupo = (nome, g, comTotal) => {
                 const p = g.total ? (g.ativos / g.total) * 100 : 0;
@@ -271,12 +361,13 @@
                     <td><div class="mini-barra"><span style="width:${p}%"></span></div></td></tr>`;
             };
             const ordenarGrupos = obj => Object.entries(obj).sort((a, b) => b[1].total - a[1].total);
+            const vazio = n => `<tr><td class="vazio" colspan="${n}">Nenhum colaborador no filtro</td></tr>`;
 
-            $('tbSite').innerHTML = ordenarGrupos(e.porSite).map(([k, g]) => linhaGrupo(k, g)).join('');
-            $('tbDepto').innerHTML = ordenarGrupos(e.porDepartamento).map(([k, g]) => linhaGrupo(k, g)).join('');
-            $('tbSecao').innerHTML = ordenarGrupos(e.porSecao).map(([k, g]) => linhaGrupo(k, g, true)).join('');
+            $('tbSite').innerHTML = ordenarGrupos(e.porSite).map(([k, g]) => linhaGrupo(k, g)).join('') || vazio(4);
+            $('tbDepto').innerHTML = ordenarGrupos(e.porDepartamento).map(([k, g]) => linhaGrupo(k, g)).join('') || vazio(4);
+            $('tbSecao').innerHTML = ordenarGrupos(e.porSecao).map(([k, g]) => linhaGrupo(k, g, true)).join('') || vazio(5);
             $('tbSituacao').innerHTML = Object.entries(e.porSituacao).sort((a, b) => b[1] - a[1])
-                .map(([k, n]) => `<tr><td><span class="badge badge-situacao ${semAcento(k) === 'ativo' ? 'ativo' : ''}">${esc(k)}</span></td><td class="num">${fmt(n)}</td></tr>`).join('');
+                .map(([k, n]) => `<tr><td><span class="badge badge-situacao ${semAcento(k) === 'ativo' ? 'ativo' : ''}">${esc(k)}</span></td><td class="num">${fmt(n)}</td></tr>`).join('') || vazio(2);
 
             const sups = Object.entries(e.porSupervisor).sort((a, b) => b[1].colaboradores - a[1].colaboradores);
             $('tbSupervisor').innerHTML = sups.length ? sups.map(([nome, s]) => `<tr>
@@ -289,53 +380,60 @@
                     <td class="num">${s.abandono ? `<span class="badge badge-abandono">${s.abandono} · ${s.taxaAbandono}%</span>` : '0'}</td>
                     <td class="num">${s.riscoAbandono ? `<span class="badge badge-risco">${s.riscoAbandono}</span>` : '0'}</td>
                 </tr>`).join('')
-                : '<tr><td class="vazio" colspan="8">Nenhum colaborador do QLP está nas listas de presença dos supervisores</td></tr>';
-
-            preencherFiltros();
-            filtrar();
+                : '<tr><td class="vazio" colspan="8">Nenhum colaborador do filtro está nas listas de presença dos supervisores</td></tr>';
         }
 
         // ===== Filtros =====
+        const FILTROS = { fSupervisor: 'supervisor', fFuncao: 'funcao', fDepto: 'departamento', fGrupo: 'grupoSecao', fSecao: 'secao', fSite: 'site', fSituacao: 'situacao' };
+        const ROTULO_TODOS = { fSupervisor: 'Todos', fFuncao: 'Todas', fDepto: 'Todos', fGrupo: 'Todos', fSecao: 'Todas', fSite: 'Todos', fSituacao: 'Todas' };
+        let destaque = '';
+
         function opcoesDe(campo, rotuloTodos) {
             const valores = [...new Set(dados.colaboradores.map(c => c[campo]).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
             return `<option value="">${rotuloTodos}</option>` + valores.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
         }
 
         function preencherFiltros() {
-            const manter = ['fSite', 'fDepto', 'fSecao', 'fSupervisor', 'fSituacao'].map(id => [id, $(id).value]);
-            $('fSite').innerHTML = opcoesDe('site', 'Todos');
-            $('fDepto').innerHTML = opcoesDe('departamento', 'Todos');
-            $('fSecao').innerHTML = opcoesDe('grupoSecao', 'Todas');
-            $('fSupervisor').innerHTML = opcoesDe('supervisor', 'Todos');
-            $('fSituacao').innerHTML = opcoesDe('situacao', 'Todas');
-            manter.forEach(([id, v]) => { if (v) $(id).value = v; });
+            Object.entries(FILTROS).forEach(([id, campo]) => {
+                const atual = $(id).value;
+                $(id).innerHTML = opcoesDe(campo, ROTULO_TODOS[id]);
+                if (atual) $(id).value = atual;
+            });
+        }
+
+        function filtroAtivo() {
+            return !!($('fBusca').value.trim() || destaque || Object.keys(FILTROS).some(id => $(id).value));
         }
 
         function filtrar() {
             const busca = semAcento($('fBusca').value.trim());
-            const f = { site: $('fSite').value, departamento: $('fDepto').value, grupoSecao: $('fSecao').value, supervisor: $('fSupervisor').value, situacao: $('fSituacao').value };
-            const destaque = $('fDestaque').value;
+            const ativos = Object.entries(FILTROS).map(([id, campo]) => [campo, $(id).value]).filter(([, v]) => v);
 
             filtrados = dados.colaboradores.filter(c => {
                 if (busca && !semAcento(c.nome).includes(busca) && !String(c.chapa).includes(busca)) return false;
-                for (const [campo, valor] of Object.entries(f)) if (valor && c[campo] !== valor) return false;
-                if (destaque === 'abandono' && !c.abandono) return false;
-                if (destaque === 'risco' && !c.riscoAbandono) return false;
+                for (const [campo, valor] of ativos) if (c[campo] !== valor) return false;
                 if (destaque === 'faltas' && !(c.faltas + c.atestados)) return false;
+                if (destaque === 'risco' && !c.riscoAbandono) return false;
+                if (destaque === 'abandono' && !c.abandono) return false;
                 if (destaque === 'semsup' && c.supervisor) return false;
                 return true;
             });
 
-            const ordem = $('fOrdem').value;
             const cmp = {
                 nome: (a, b) => a.nome.localeCompare(b.nome, 'pt-BR'),
+                faltas: (a, b) => (b.faltas + b.atestados) - (a.faltas + a.atestados) || b.faltasConsecutivas - a.faltasConsecutivas,
                 consecutivas: (a, b) => b.faltasConsecutivas - a.faltasConsecutivas || b.faltas - a.faltas,
                 absenteismo: (a, b) => b.absenteismo - a.absenteismo,
                 presente: (a, b) => b.diasPresente - a.diasPresente,
-            }[ordem];
+            }[$('fOrdem').value];
             filtrados.sort(cmp);
+
+            document.querySelectorAll('.atalho').forEach(b => b.classList.toggle('ativo', b.dataset.destaque === destaque));
+            $('resumoFiltro').textContent = filtroAtivo() ? `${fmt(filtrados.length)} colaborador(es) no filtro` : '';
             pagina = 1;
+            renderPainel();
             renderColaboradores();
+            if (window.UI && UI.contarFiltros) UI.contarFiltros();
         }
 
         function renderColaboradores() {
@@ -376,12 +474,23 @@
             renderColaboradores();
         });
 
-        ['fSite', 'fDepto', 'fSecao', 'fSupervisor', 'fSituacao', 'fDestaque', 'fOrdem'].forEach(id => $(id).addEventListener('change', filtrar));
+        [...Object.keys(FILTROS), 'fOrdem'].forEach(id => $(id).addEventListener('change', filtrar));
+
+        // Atalhos: um clique liga, outro desliga. "Mais faltantes" também ordena por faltas.
+        $('atalhos').addEventListener('click', e => {
+            const b = e.target.closest('[data-destaque]');
+            if (!b) return;
+            destaque = destaque === b.dataset.destaque ? '' : b.dataset.destaque;
+            if (destaque === 'faltas') $('fOrdem').value = 'faltas';
+            else if (destaque === 'risco' || destaque === 'abandono') $('fOrdem').value = 'consecutivas';
+            filtrar();
+        });
         let timerBusca;
         $('fBusca').addEventListener('input', () => { clearTimeout(timerBusca); timerBusca = setTimeout(filtrar, 200); });
         $('btnLimpar').addEventListener('click', () => {
             $('fBusca').value = '';
-            ['fSite', 'fDepto', 'fSecao', 'fSupervisor', 'fSituacao', 'fDestaque'].forEach(id => { $(id).value = ''; });
+            Object.keys(FILTROS).forEach(id => { $(id).value = ''; });
+            destaque = '';
             $('fOrdem').value = 'nome';
             filtrar();
         });
